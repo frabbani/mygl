@@ -1,0 +1,2 @@
+# mygl
+OpenGL wrapper library
