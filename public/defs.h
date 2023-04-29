@@ -1,5 +1,8 @@
 #include "vec.h"
 
+// Math below uses right-handed coordinates, where right is +x, look is +y, and up is +z
+
+
 static MyGL_Vec3 MyGL_vec3R(){
   MyGL_Vec3 v3;
   v3.x = 1.0f;
@@ -85,24 +88,12 @@ static MyGL_Vec4 MyGL_vec4( float x, float y, float z, float w ){
   return v;
 }
 
+
 static MyGL_Mat4 MyGL_mat4Identity(){
   MyGL_Mat4 mat4;
   for( int i = 0; i < 4; i++ )
     for( int j = 0; j < 4; j++ )
       mat4.f4x4[i][j] = i == j ? 1.0f : 0.0f;
-  return mat4;
-}
-
-
-static MyGL_Mat4 MyGL_mat4Transpose( MyGL_Mat4 mat4 ){
-  for( int i = 0; i < 4; i++ )
-    for( int j = 0; j < 4; j++ )
-      if( i != j ){
-        float t = mat4.f4x4[i][j];
-        mat4.f4x4[i][j] = mat4.f4x4[j][i];
-        mat4.f4x4[j][i] = t;
-      }
-
   return mat4;
 }
 
@@ -127,7 +118,7 @@ static MyGL_Mat4 MyGL_mat4Perspective( float aspect, float cotan_theta, float mi
   //    |   0,   1,   0,   0 |   | 1 |   | w' |
   //
   // x' = x / tan( fov/2 )
-  // y' = z / tan( fov/2 * aspect )
+  // y' = aspect * z / tan( fov/2 )
   // z' = a * y + b
   // w' = y
   //
