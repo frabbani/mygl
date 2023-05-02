@@ -132,7 +132,7 @@ namespace shaders
 
       std::string formatted( std::string_view shader ) const {
         std::stringstream ss;
-        ss << "#version 330" << std::endl;
+        ss << "#version 420" << std::endl;
         ss << "#define " << shader << std::endl;
         for( auto l : lines ){
           ss << l << std::endl;
@@ -548,6 +548,7 @@ namespace shaders
     void apply(){
       if( (GLuint)-1 == prog )
         return;
+
       glUseProgram( prog );
 
       if( statefulCull.has_value() )
@@ -567,6 +568,7 @@ namespace shaders
 
       if( globalUniforms.has_value())
         globalUniforms.value().apply();
+
     }
   };
 

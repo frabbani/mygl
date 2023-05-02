@@ -3,9 +3,10 @@
 
 #include <GL/glew.h>
 
-
 #include "strn.h"
 #include "vec.h"
+#include "image.h"
+
 
 typedef void (*MyGL_LogFunc)(const char*);
 
@@ -189,6 +190,7 @@ extern "C" {
 
 #define DLLEXPORT __declspec( dllexport )
 
+DLLEXPORT void  MyGL_terminate();
 DLLEXPORT MyGL *MyGL_initialize( MyGL_LogFunc logger, int32_t initialize_glew, uint32_t stream_count );
 DLLEXPORT MyGL_VertexAttributeStream MyGL_vertexAttributeStream( const char *name );
 DLLEXPORT MyGL_ColorFormat MyGL_colorFormat( const char *name );
@@ -199,12 +201,20 @@ DLLEXPORT void MyGL_applyBlend();
 DLLEXPORT void MyGL_resetCull ();
 DLLEXPORT void MyGL_resetDepth();
 DLLEXPORT void MyGL_resetBlend();
+DLLEXPORT void MyGL_bindSamplers();
 
 typedef char (*MyGl_GetCharFunc)( void * );
 
-DLLEXPORT int32_t MyGL_loadSourceLibrary( MyGl_GetCharFunc source_feed, void *source_param, const char *alias );
-DLLEXPORT int32_t MyGL_loadShader( MyGl_GetCharFunc source_feed, void *source_param, const char *alias );
-DLLEXPORT int32_t MyGL_loadShaderStr( const char *source_str, void *source_param, const char *alias );
+DLLEXPORT GLboolean MyGL_loadSourceLibrary( MyGl_GetCharFunc source_feed, void *source_param, const char *alias );
+DLLEXPORT GLboolean MyGL_loadShader( MyGl_GetCharFunc source_feed, void *source_param, const char *alias );
+DLLEXPORT GLboolean MyGL_loadShaderStr( const char *source_str, void *source_param, const char *alias );
+
+
+DLLEXPORT GLboolean MyGL_createTexture2D( const char *name,
+                                          MyGL_ROImage image, const char *format,
+                                          GLboolean filtered, GLboolean mipmapped, GLboolean repeat  );
+
+
 #ifdef __cplusplus
 } /* extern "C" */
 

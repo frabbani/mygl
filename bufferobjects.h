@@ -28,11 +28,11 @@ namespace mygl
       format = target = 0;
     }
 
-    Bo( GLenum target_, GLenum format_, size_t size_, bool clear=true ) :
+    Bo( GLenum target_, GLenum format_, size_t size_ ) :
       format(format_),
-      target(target_)
+      target(target_),
+      size( size_ )
     {
-      size = 0 == size_ ? 1 : size_;
       glGenBuffers( 1, &bo );
       glBindBuffer( target, bo );
       glBufferData( target, size, nullptr, GL_DYNAMIC_DRAW );
@@ -44,20 +44,18 @@ namespace mygl
 
     void push(){
       bind();
-      void *p = glMapBuffer( bo, GL_WRITE_ONLY );
-      memcpy( p, dataPtr.p, size );
-      glUnmapBuffer( bo );
-
-      //glBindBuffer   ( bo->target, bo->_o );
-      //glBufferSubData( bo->target, bo->size, bo->data );
+      //void *p = glMapBuffer( bo, GL_WRITE_ONLY );
+      //memcpy( p, dataPtr.p, size );
+      //glUnmapBuffer( bo );
+      glBindBuffer   ( target, bo );
+      glBufferSubData( target, 0, size, dataPtr.p );
     }
   };
 
   struct Ibo : public Bo
   {
     size_t count;
-    Ibo( uint32_t *indices, size_t count_ ) : Bo( GL_ELEMENT_ARRAY_BUFFER, GL_UNSIGNED_INT, sizeof(uint32_t) * count_ > 0 ? count_ : 1 ){
-      count = count_ > 0 ? count_ : 1;
+    Ibo( uint32_t *indices, size_t count_ ) : Bo( GL_ELEMENT_ARRAY_BUFFER, GL_UNSIGNED_INT, sizeof(uint32_t) * count ), count(count_) {
       if( indices ){
         memcpy( dataPtr.uint32s, indices, sizeof(uint32_t) * count );
         push();

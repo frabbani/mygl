@@ -9,8 +9,6 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include "public/mygl.h"
-#include "public/defs.h"
-
 #include "utils/stateful.h"
 
 #include "utils.h"
@@ -19,6 +17,7 @@
 #include "textures.h"
 #include "bufferobjects.h"
 #include "mygl.h"
+#include "public/vecdefs.h"
 #include "shaders.h"
 
 
@@ -31,7 +30,7 @@ std::shared_ptr< utils::Stateful<Depth> > statefulDepth = nullptr;
 std::shared_ptr< utils::Stateful<Blend> > statefulBlend = nullptr;
 
 MyGL *MyGL_initialize( MyGL_LogFunc logger, int initialize_glew, uint32_t stream_count ){
-  utils::logFunc = logger;
+  utils::logfunc(logger);
   if( initialize_glew ){
     glewInit();
     utils::logout( "GLEW initialized" );
@@ -102,10 +101,17 @@ MyGL *MyGL_initialize( MyGL_LogFunc logger, int initialize_glew, uint32_t stream
   glLoadIdentity();
   glMatrixMode( GL_PROJECTION );
   glLoadIdentity();
+  glEnable( GL_TEXTURE_2D );
+
   utils::logout( "done!" );
 
   return &myGL;
 }
+
+void MyGL_terminate(){
+  utils::logout( "Farewell GL!");
+}
+
 
 MyGL_VertexAttributeStream MyGL_vertexAttributeStream( const char *name ){
   MyGL_VertexAttributeStream s;
@@ -216,25 +222,70 @@ void MyGL_resetBlend(){
   statefulBlend->force();
 }
 
-int32_t MyGL_loadSourceLibrary( MyGl_GetCharFunc source_feed, void *source_param, const char *alias ){
+void MyGL_bindSamplers(){
+  for( size_t i = 0; i < MYGL_MAX_SAMPLERS; i++ ){
+    if( myGL.samplers[i].chars[0] != '\0' ){
+      auto f = named2DTextures.find( myGL.samplers[i].chars );
+      if( f != named2DTextures.end() ){
+        f->second->apply(i);
+        //utils::logout( "%s - binding '%s' to %d", __FUNCTION__, f->first.c_str(), (int)i );
+      }
+    }
+  }
+}
+
+GLboolean MyGL_loadSourceLibrary( MyGl_GetCharFunc source_feed, void *source_param, const char *alias ){
   if( !alias ){
     utils::logout( "error: shader library has no alias" );
-    return 0;
+    return GL_FALSE;
   }
   shaders::LineFeed feed( source_feed, source_param );
   shaders::SourceCode::sharedSource.try_emplace( alias, std::string(alias), feed );
-  return 1;
+  return GL_TRUE;
 }
 
-int32_t MyGL_loadShader( MyGl_GetCharFunc source_feed, void *source_param, const char *alias ){
+GLboolean MyGL_loadShader( MyGl_GetCharFunc source_feed, void *source_param, const char *alias ){
   if( !alias ){
     utils::logout( "error: shader has no alias" );
-    return 0;
+    return GL_FALSE;
   }
   shaders::LineFeed feed( source_feed, source_param );
   shaders::SourceCode::Lines srcLines( alias, feed );
   shaders::SourceCode code( srcLines );
   shaders::Materials::add(code);
 
-  return 1;
+  return GL_TRUE;
+}
+
+GLboolean MyGL_loadShaderStr( const char *source_str, void *source_param, const char *alias ){
+  if( !alias ){
+    utils::logout( "error: shader has no alias" );
+    return GL_FALSE;
+  }
+  shaders::LineFeed feed( source_str );
+  shaders::SourceCode::Lines srcLines( alias, feed );
+  shaders::SourceCode code( srcLines );
+  shaders::Materials::add(code);
+
+  return GL_TRUE;
+}
+
+GLboolean MyGL_createTexture2D( const char *name,
+                                MyGL_ROImage image, const char *format,
+                                GLboolean filtered, GLboolean mipmapped, GLboolean repeat  ){
+  if( !name ){
+    utils::logout( "error: texture has no alias" );
+    return GL_FALSE;
+  }
+
+  if( !image.w || !image.h || !image.pixels ){
+    utils::logout( "error: texture '%s' is invalid", name );
+    return GL_FALSE;
+  }
+
+  auto tex = std::make_shared<Texture2D>( name, image, format, filtered, mipmapped, repeat );
+  named2DTextures[ name ] = tex;
+  utils::logout( "2D texture '%s' created:", name );
+  tex->logInfo();
+  return GL_TRUE;
 }
