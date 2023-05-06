@@ -7,7 +7,6 @@
 
 #include "public/mygl.h"
 #include "colors.h"
-#include "image.h"
 
 /*
   Texture formats and Data formats are different!

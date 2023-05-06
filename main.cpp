@@ -167,7 +167,7 @@ MyGL_VertexAttributeStream MyGL_vertexAttributeStream( const char *name ){
   return s;
 }
 
-void MyGL_drawStream( const char *streams ){
+void MyGL_drawStreaming( const char *streams ){
   auto get = shaders::Materials::get( myGL.material.chars );
   if( !get.has_value())
     return;
@@ -187,6 +187,7 @@ void MyGL_drawStream( const char *streams ){
     while( drawer.drawPrimitive( ctx ) ){
     }
     glEnd();
+    drawer.reset();
   }
 }
 

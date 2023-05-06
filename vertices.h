@@ -82,6 +82,8 @@ struct StreamPrimitiveDrawer{
     return count < total;
   }
 
+  void reset(){ index = 0; }
+
   struct DrawCtx{
     std::vector< std::shared_ptr<VertexAttributeStream4fv> > streams;
     DrawCtx( const std::vector<std::string_view>& names ){

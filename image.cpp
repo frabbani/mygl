@@ -93,7 +93,7 @@ MyGL_Image MyGL_imageMip( MyGL_ROImage image ){
   if( image.w == 1 && image.h == 1 )
     return out;
 
-  /*
+
   if( 1 == image.w ){
     out = MyGL_imageAlloc( 1, image.h / 2 );
     bool oddh = ( image.h & 0x01 ) > 0;
@@ -116,7 +116,7 @@ MyGL_Image MyGL_imageMip( MyGL_ROImage image ){
      }
     return out;
   }
-  */
+
 
   out = MyGL_imageAlloc( image.w / 2, image.h / 2 );
 
