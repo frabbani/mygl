@@ -1,5 +1,27 @@
 #pragma once
 
+
+/**
+
+// Cull: Back, Front, FrontAndBack/BackAndFront Off
+Cull Front
+
+Blend SrcAlpha OneMinusSrcAlpha Add, Off
+
+// ColorWrite: Off, On, Red, Green, Blue
+ColorWrite Red
+
+// Depth/Stencil: Off Always, Never, NotEqual, Less, Greater, Equal, LEqual, GEqual, ReadOnly
+Depth LEqual
+
+// Stencil Test: Same as Depth (except for ReadOnly), Always (Default)
+// Stencil Op:  Keep (Default), Zero, Replace, Incr, IncrWrap, Decr, DecrWrap, Invert
+// stencil Write Mask = NoBits (all 0s), [number], AllBits (Default - all 1s)
+Stencil Always WriteMask.AllBits Value.1 ValueMask.AllBits StencilFail.Keep StencilPassDepthFail.Keep StencilPassDepthPass.Replace
+
+**/
+
+
 extern MyGL myGL;
 
 namespace mygl
@@ -7,6 +29,12 @@ namespace mygl
 
 namespace shaders
 {
+  static constexpr int lineSize = 256;
+  static constexpr int maxTokens = 16;
+  using Buffer = strutils::Buffer< lineSize >;
+  using LineFeed = strutils::LineFeed<lineSize>;
+  using Tokenizer = strutils::Tokenizer<lineSize, maxTokens>;
+
   static const std::map<std::string_view, MyGL_CullMode> cullModes={
       { "Back", MYGL_BACK },
       { "Front",  MYGL_FRONT },
@@ -67,6 +95,8 @@ namespace shaders
       { "GEqual", MYGL_GEQUAL },
   };
 
+  static const std::map<std::string_view, MyGL_StencilMode>& stencilModes = depthModes;
+
   MyGL_DepthMode depthModeFromString( std::string_view s ){
     auto it = depthModes.find( s );
     if( it != depthModes.end() )
@@ -74,13 +104,349 @@ namespace shaders
     return MYGL_ALWAYS;
   }
 
-  static constexpr int lineSize = 256;
-  static constexpr int maxPasses = 16;
-  using Buffer = strutils::Buffer< lineSize >;
-  using LineFeed = strutils::LineFeed<lineSize>;
-  using Tokenizer = strutils::Tokenizer<lineSize, maxPasses>;
+  /*
+  MYGL_KEEP = GL_KEEP,
+  MYGL_ZEROOUT = GL_ZERO,
+  MYGL_REPLACE = GL_REPLACE,
+  MYGL_INCR = GL_INCR,
+  MYGL_INCR_WRAP = GL_INCR_WRAP,
+  MYGL_DECR = GL_DECR,
+  MYGL_DECR_WRAP = GL_DECR_WRAP,
+  MYGL_INVERT = GL_INVERT,
+  */
+  static const std::map<std::string_view, MyGL_StencilAction> stencilActions ={
+      { "Zero", MYGL_ZEROOUT },
+      { "Keep",  MYGL_KEEP },
+      { "Replace", MYGL_REPLACE },
+      { "Incr", MYGL_INCR },
+      { "IncrWrap", MYGL_INCR_WRAP },
+      { "Decr", MYGL_DECR },
+      { "DecrWrap", MYGL_DECR_WRAP },
+      { "Invert", MYGL_INVERT },
+  };
+
+  MyGL_DepthMode stencilModeFromString( std::string_view s ){
+    auto it = stencilModes.find( s );
+    if( it != stencilModes.end() )
+      return it->second;
+    return MYGL_ALWAYS;
+  }
+
+
+  struct StencilParser{
+
+    strutils::KVParse<MyGL_StencilAction> stencilFail;
+    strutils::KVParse<MyGL_StencilAction> stencilPassDepthFail;
+    strutils::KVParse<MyGL_StencilAction> stencilPassDepthPass;
+    strutils::KVParse<GLuint> writeMask;
+    strutils::KVParse<GLuint> valueMask;
+    strutils::KVParse<GLint> ref;
+
+    StencilParser() :
+      stencilFail( MYGL_KEEP ),
+      stencilPassDepthFail( MYGL_KEEP ),
+      stencilPassDepthPass( MYGL_KEEP ),
+      writeMask( 0 ),
+      valueMask( 0 ),
+      ref( 0 ){
+
+      stencilFail.keyAlias( "StencilFail" );
+      stencilFail.keyAlias( "Fail" );
+      stencilFail.supportValue( "Keep", MYGL_KEEP );
+      stencilFail.supportValue( "Zero", MYGL_ZEROOUT );
+      stencilFail.supportValue( "Replace", MYGL_REPLACE );
+      stencilFail.supportValue( "Incr", MYGL_INCR );
+      stencilFail.supportValue( "IncrWrap", MYGL_INCR_WRAP );
+      stencilFail.supportValue( "Decr", MYGL_DECR );
+      stencilFail.supportValue( "DecrWrap", MYGL_DECR_WRAP );
+      stencilFail.supportValue( "Invert", MYGL_INVERT );
+
+      stencilPassDepthFail.keyAlias( "StencilPassDepthFail" );
+      stencilPassDepthFail.keyAlias( "DepthFail" );
+      stencilPassDepthFail.values = stencilFail.values;
+
+      stencilPassDepthPass.aliases.emplace_back( "StencilPassDepthPass" );
+      stencilPassDepthPass.aliases.emplace_back( "Pass" );
+      stencilPassDepthPass.values = stencilFail.values;
+
+
+      auto isNumber = [=]( std::string_view str ){
+        for( auto c : str )
+          if( !std::isdigit(c) )
+            return false;
+        return true;
+      };
+
+      auto toNumber = [=]( std::string_view str, GLuint& v ) -> bool {
+        uint64_t u;
+        bool pass = strutils::toUnsigned( str,  u );
+        if( pass )
+          v = GLuint( v & 0xffffffff );
+        return pass;
+      };
+
+      writeMask.keyAlias( "WriteMask" );
+      writeMask.supportValue( "NoBits", 0 );
+      writeMask.supportValue( "AllBits", 0xffffffff );
+      writeMask.supportValue( isNumber, toNumber );
+
+      valueMask.keyAlias( "ValueMask" );
+      valueMask.values = writeMask.values;
+
+      ref.keyAlias( "Value" );
+      ref.keyAlias( "Ref" );
+
+      auto toSignedNumber = [=]( std::string_view str, GLint& v ) -> bool {
+        int64_t i;
+        bool pass = strutils::toSigned( str,  i );
+        if( pass )
+          v = GLint( v & 0xffffffff );
+        return pass;
+      };
+
+      ref.supportValue( isNumber, [=]( std::string_view str, GLint& v ){
+        return GLint( toSignedNumber(str,v) );
+      } );
+    }
+
+    bool parse( std::string_view token, Stencil& stencil, std::string& error ){
+      std::stringstream ss;
+      ss << "stencil error - ";
+      if( strutils::equals( token.data(), "Off" ) ){
+        stencil.on = GL_FALSE;
+        return true;
+      }
+      auto it = stencilModes.find( token );
+      if( it != stencilModes.end() ){
+        stencil.stencilTest.mode = it->second;
+        return true;
+      }
+      strutils::Tokenizer<32,2> tokenizer;
+      tokenizer.tokenize( token.data(), "-.:_" );
+      if( tokenizer.count != 2 ){
+        ss << " invalid key-value pair: " << token;
+        ss >> error;
+        return false;
+      }
+
+      std::pair<bool, bool> r;
+      r = writeMask.parseTokens(tokenizer[0], tokenizer[1], stencil.writeMask );
+      if( r.first ){
+        if( !r.second ){
+          ss << "invalid write mask: " << std::string_view( tokenizer[1] );
+          ss >> error;
+          return false;
+        }
+        return true;
+      }
+
+      r = valueMask.parseTokens(tokenizer[0], tokenizer[1], stencil.stencilTest.mask );
+      if( r.first ){
+        if( !r.second ){
+          ss << "invalid ref mask: " <<  std::string_view( tokenizer[1] );
+          ss >> error;
+          return false;
+        }
+        return true;
+      }
+
+      r = ref.parseTokens( tokenizer[0], tokenizer[1], stencil.stencilTest.ref );
+      if( r.first ){
+        if( !r.second ){
+          ss << "invalid ref value: " << std::string_view( tokenizer[1] );
+          ss >> error;
+          return false;
+        }
+        return true;
+      }
+
+      r = stencilFail.parseTokens(tokenizer[0], tokenizer[1], stencil.stencilOp.stencilFail );
+      if( r.first ){
+        if( !r.second ){
+          ss << "invalid stencil-fail value: " << std::string_view( tokenizer[1] );
+          ss >> error;
+          return false;
+        }
+        return true;
+      }
+
+      r = stencilPassDepthFail.parseTokens(tokenizer[0], tokenizer[1], stencil.stencilOp.stencilPassDepthFail );
+      if( r.first ){
+        if( !r.second ){
+          ss << "invalid stencil-pass/depth-fail value: " << std::string_view( tokenizer[1] );
+          ss >> error;
+          return false;
+        }
+        return true;
+      }
+
+      r = stencilPassDepthPass.parseTokens(tokenizer[0], tokenizer[1], stencil.stencilOp.stencilPassDepthPass );
+      if( r.first ){
+        if( !r.second ){
+          ss << "invalid stencil-pass/depth-pass value: " << std::string_view( tokenizer[1] );
+          ss >> error;
+          return false;
+        }
+        return true;
+      }
+      ss << "unknown token: " << token;
+      ss >> error;
+      return false;
+    }
+
+  };
+
+
+  /*
+  bool parseStencilValues( std::string_view s, MyGL_Stencil& stencil ){
+/ *
+  Stencil Test: Same as Depth (except for ReadOnly), Always (Default)
+  Stencil Op:  Keep (Default), Zero, Replace, Incr, IncrWrap, Decr, DecrWrap, Invert
+  stencil Write Mask = NoBits (all 0s), number, AllBits (Default - all 1s)
+* /
+    auto mode = stencilModes.find( s );
+    if( mode != stencilModes.end() ){
+      stencil.stencilTest.mode = mode->second;
+      return true;
+    }
+    if( strutils::equals(s.data(), "Off") ){
+      stencil.on = GL_FALSE;
+      return true;
+    }
+
+    strutils::Tokenizer<64,8> tokenizer;
+    tokenizer.tokenize( s.data(), ":.-" );
+    if( tokenizer.count == 2 ){
+
+      if( strutils::equals( tokenizer[0], "WriteMask") ){
+        if( strutils::equals( tokenizer[1], "AllBits") ){
+          stencil.writeMask = 0xffffffff;
+          return true;
+        }
+        else if( strutils::equals( tokenizer[1], "NoBits") ){
+          stencil.writeMask = 0;
+          return true;
+        }
+        uint64_t u;
+        bool yes = strutils::toUnsigned( s, u );
+        if( yes ){
+          stencil.writeMask = (GLuint)( u & 0xffffffff );
+          return true;
+        }
+        utils::logout( "stencil write mask value is not valid" );
+        return false;
+      }
+      else{
+        utils::logout( "stencil write mask has no value" );
+        return false;
+      }
+
+      if( strutils::equals( tokenizer[0], "ValueMask") ){
+        if( strutils::equals( tokenizer[1], "AllBits") ){
+          stencil.stencilTest.mask = 0xffffffff;
+          return true;
+        }
+        else if( strutils::equals( tokenizer[1], "NoBits") ){
+          stencil.stencilTest.mask = 0;
+          return true;
+        }
+        uint64_t u;
+        bool yes = strutils::toUnsigned( s, u );
+        if( yes ){
+          stencil.stencilTest.mask = (GLuint)( u & 0xffffffff );
+          return true;
+        }
+        utils::logout( "stencil value mask value is not valid" );
+        return false;
+      }
+      else{
+        utils::logout( "stencil value mask has no value" );
+        return false;
+      }
+
+      if( strutils::equals( tokenizer[0], "Value") ){
+        uint64_t u;
+        bool yes = strutils::toUnsigned( s, u );
+        if( yes ){
+          stencil.stencilTest.ref = (GLuint)( u & 0xffffffff );
+          return true;
+        }
+        utils::logout( "stencil value is not valid" );
+        return false;
+      }
+
+      auto it = stencilActions.find( tokenizer[2] );
+      if( it != stencilActions.end() ){
+
+        if( strutils::equals( tokenizer[0], "StencilFail") ||
+            strutils::equals( tokenizer[0], "Fail") ){
+          stencil.stencilOp.stencilFail = it->second;
+          return true;
+        }
+        if( strutils::equals( tokenizer[0], "StencilPassDepthFail") ||
+            strutils::equals( tokenizer[0], "DepthFail") ){
+          stencil.stencilOp.stencilPassDepthFail = it->second;
+          return true;
+        }
+        if( strutils::equals( tokenizer[0], "StencilPassDepthPass") ||
+            strutils::equals( tokenizer[0], "Pass") ){
+          stencil.stencilOp.stencilPassDepthFail = it->second;
+          return true;
+        }
+        utils::logout( "stencil op is invalid" );
+        return false;
+      }
+
+    }
+
+
+    / *
+    if( strutils::equals( tokenizer[0], "StencilFail") || strutils::equals( tokenizer[0], "Fail")){
+      auto action = stencilActions.find( tokenizer[2] );
+      if( action == stencilActions.end() )
+        return false;
+      values.stencilOp.stencilFail = action->second;
+      return true;
+    }
+    else if( strutils::equals( tokenizer[0], "StencilPassDepthFail") || strutils::equals( tokenizer[0], "DepthFail")){
+      auto action = stencilActions.find( tokenizer[2] );
+      if( action == stencilActions.end() )
+        return false;
+      values.stencilOp.stencilPassDepthFail = action->second;
+      return true;
+    }
+    else if( strutils::equals( tokenizer[0], "StencilPassDepthPass") || strutils::equals( tokenizer[0], "Pass")){
+      auto action = stencilActions.find( tokenizer[1] );
+      if( action == stencilActions.end() )
+        return false;
+      values.stencilOp.stencilPassDepthFail = action->second;
+      return true;
+    }
+    else if( strutils::equals( tokenizer[0], "Ref") ){
+      uint64_t v;
+      bool res = strutils::toUnsigned( tokenizer[1], v );
+      if( !res )
+        return false;
+      values.stencilTest.ref = (GLint)v;
+      return true;
+    }
+    else if( strutils::equals( tokenizer[0], "Mask") ){
+      uint64_t v;
+      bool res = strutils::toUnsigned( tokenizer[1], v );
+      if( !res )
+        return false;
+      values.stencilTest.mask = (GLuint)v;
+      return true;
+    }
+    * /
+    return false;
+  }
+  */
+
 
   static std::map<std::string, UniformSetter> globalUniformSetters;
+  static StencilParser stencilParser;
+
 
   struct SourceCode{
 
@@ -312,6 +678,7 @@ namespace shaders
 
   std::map<std::string, SourceCode::Lines> SourceCode::sharedSource;
 
+
   struct ShaderPass {
     struct GlobalUniforms{
 
@@ -403,9 +770,11 @@ namespace shaders
     std::string source;
     std::string pass;
 
-    std::optional< utils::Stateful<Cull>  > statefulCull;
-    std::optional< utils::Stateful<Depth> > statefulDepth;
-    std::optional< utils::Stateful<Blend> > statefulBlend;
+    std::optional< utils::Stateful<Cull>      > statefulCull;
+    std::optional< utils::Stateful<Depth>     > statefulDepth;
+    std::optional< utils::Stateful<Blend>     > statefulBlend;
+    std::optional< utils::Stateful<Stencil>   > statefulStencil;
+    std::optional< utils::Stateful<ColorMask> > statefulColorMask;
 
     std::optional<GlobalUniforms> globalUniforms = std::nullopt;
     std::map<std::string, GLint> unifs;
@@ -497,6 +866,41 @@ namespace shaders
           }
           continue;
         }
+
+        if( strutils::equals( tokenizer[0].data(), "Stencil" )  ){
+          statefulStencil = utils::Stateful<Stencil>( StencilState::makeUnique() );
+          Stencil& stencil = statefulStencil.value().current();
+          std::string error;
+          for( int i = 1; i < tokenizer.count; i++ ){
+            if( strutils::equals( tokenizer[i], "///", 3) )
+              break;
+            if( !stencilParser.parse( tokenizer[i], stencil, error ) ){
+              utils::logout( "Shader '%s' Pass '%s: %s", source.c_str(), pass.c_str(), error.c_str() );
+            }
+          }
+        }
+
+        if( strutils::equals( tokenizer[0].data(), "ColorWrite" )  ){
+          statefulColorMask = utils::Stateful<ColorMask>( ColorMaskState::makeUnique() );
+          auto& colorMask = statefulColorMask.value().current();
+          colorMask = { GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE };
+          if( !off )
+            for( int i = 1; i < tokenizer.count; i++ ){
+              if( strutils::equals( tokenizer[i].data(), "Red" ) )
+                colorMask.red = GL_TRUE;
+              if( strutils::equals( tokenizer[i].data(), "Green" ) )
+                colorMask.green = GL_TRUE;
+              if( strutils::equals( tokenizer[i].data(), "Blue" ) )
+                colorMask.blue = GL_TRUE;
+              if( strutils::equals( tokenizer[i].data(), "Alpha" ) )
+                colorMask.alpha = GL_TRUE;
+              if( strutils::equals( tokenizer[i].data(), "On" ) ){
+                colorMask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE };
+                break;
+              }
+            }
+        }
+
       }
 
       vert = glCreateShader( GL_VERTEX_SHADER );
@@ -565,6 +969,16 @@ namespace shaders
         statefulDepth.value().apply();
       else
         MyGL_applyDepth();
+
+      if( statefulStencil.has_value() )
+        statefulStencil.value().apply();
+      else
+        MyGL_applyStencil();
+
+      if( statefulColorMask.has_value() )
+        statefulColorMask.value().apply();
+      else
+        MyGL_applyColorMask();
 
       if( globalUniforms.has_value())
         globalUniforms.value().apply();

@@ -3,6 +3,7 @@
 #include "public/mygl.h"
 
 #include "utils/stateful.h"
+#include "utils/union.h"
 
 namespace mygl
 {
@@ -40,6 +41,12 @@ struct Cull : MyGL_Cull {
   }
 };
 
+
+//MyGL_Cull& operator = ( MyGL_Cull& lhs, const Cull& rhs ){
+//  lhs = static_cast<MyGL_Cull>(rhs);
+//  return lhs;
+//}
+
 struct CullState : public utils::StatefulState<Cull> {
 
   void forceCb() override {
@@ -47,6 +54,7 @@ struct CullState : public utils::StatefulState<Cull> {
     current.applyFrontFaceIsCCW();
     current.applyCullMode();
   }
+
 
   void applyCb( const Cull& active ) override {
     if( active.on != current.on )
@@ -58,6 +66,8 @@ struct CullState : public utils::StatefulState<Cull> {
   }
 
   static std::unique_ptr< utils::StatefulState<Cull> > makeUnique(){
+    return std::unique_ptr<utils::StatefulState<Cull> >( new CullState() );
+
     auto p = std::make_unique<CullState>();
     return
         utils::unique_move< utils::StatefulState<Cull>, CullState >( std::move(p) );
@@ -99,7 +109,13 @@ struct Depth : MyGL_Depth {
   }
 };
 
+//MyGL_Depth& operator = ( MyGL_Depth& lhs, const Depth& rhs ){
+//  lhs = static_cast<MyGL_Depth>(rhs);
+//  return lhs;
+//}
+
 struct DepthState : public utils::StatefulState<Depth> {
+
   void forceCb() override {
     current.applyOn();
     current.applyDepthWrite();
@@ -116,6 +132,8 @@ struct DepthState : public utils::StatefulState<Depth> {
   }
 
   static std::unique_ptr< utils::StatefulState<Depth> > makeUnique(){
+    return std::unique_ptr<utils::StatefulState<Depth> >( new DepthState() );
+
     auto p = std::make_unique<DepthState>();
     return
         utils::unique_move< utils::StatefulState<Depth>, DepthState >( std::move(p) );
@@ -160,7 +178,13 @@ struct Blend : MyGL_Blend {
 
 };
 
+//MyGL_Blend& operator = ( MyGL_Blend& lhs, const Blend& rhs ){
+//  lhs = static_cast<MyGL_Blend>(rhs);
+//  return lhs;
+//}
+
 struct BlendState : public utils::StatefulState<Blend> {
+
   void forceCb() override {
     current.applyOn();
     current.applyBlendOpSrcDst();
@@ -178,12 +202,192 @@ struct BlendState : public utils::StatefulState<Blend> {
   }
 
   static std::unique_ptr< utils::StatefulState<Blend> > makeUnique(){
-    auto p = std::make_unique<BlendState>();
-    return
-        utils::unique_move< utils::StatefulState<Blend>, BlendState >( std::move(p) );
+    return std::unique_ptr<utils::StatefulState<Blend> >( new BlendState() );
+    //auto p = std::make_unique<BlendState>();
+    //return
+    //    utils::unique_move< utils::StatefulState<Blend>, BlendState >( std::move(p) );
   }
 };
 
+
+bool operator != (const MyGL_StencilTest& lhs, const MyGL_StencilTest& rhs ){
+  return lhs.mask != rhs.mask || lhs.mode != rhs.mode || lhs.ref != rhs.ref;
+}
+
+bool operator != (const MyGL_StencilOp& lhs, const MyGL_StencilOp& rhs ){
+  return
+      lhs.stencilFail != rhs.stencilFail ||
+      lhs.stencilPassDepthFail != rhs.stencilPassDepthFail ||
+      lhs.stencilPassDepthPass != rhs.stencilPassDepthPass;
+}
+
+bool operator != (const MyGL_Stencil& lhs, const MyGL_Stencil& rhs ){
+  return
+      lhs.on != rhs.on ||
+      // lhs.separate != rhs.separate ||
+      lhs.writeMask != rhs.writeMask ||
+      lhs.stencilTest != rhs.stencilTest ||
+      lhs.stencilOp != rhs.stencilOp; // ||
+      // lhs.stencilBackTest != rhs.stencilBackTest ||
+      // lhs.stencilBackOp != rhs.stencilBackOp;
+}
+
+struct Stencil : public MyGL_Stencil {
+
+  Stencil(){
+    on = GL_FALSE;
+    // separate = GL_FALSE;
+    writeMask = 0xffffffff;
+    stencilOp.stencilFail = stencilOp.stencilPassDepthFail = stencilOp.stencilPassDepthPass = MYGL_KEEP;
+    stencilTest.ref = 0;
+    stencilTest.mask = 0xffffffff;
+    stencilTest.mode = MYGL_ALWAYS;
+    // stencilBackOp = stencilOp;
+    // stencilBackTest = stencilTest;
+  }
+
+  Stencil& operator = ( const MyGL_Stencil& rhs ){
+    *(static_cast<MyGL_Stencil *>(this)) = rhs;
+    return *this;
+  }
+
+  void applyOn(){
+    if( on )
+      glEnable ( GL_STENCIL );
+    else
+      glDisable( GL_STENCIL );
+  }
+
+
+  void applyWriteMask(){
+    glStencilMask( writeMask );
+  }
+
+  void applyTest(){
+    /*
+    if( separate ){
+      glStencilFuncSeparate( GL_FRONT, stencilTest.mode, stencilTest.ref, stencilTest.mask );
+      glStencilFuncSeparate( GL_BACK, stencilBackTest.mode, stencilBackTest.ref, stencilBackTest.mask );
+    }
+    else */
+      glStencilFunc( stencilTest.mode, stencilTest.ref, stencilTest.mask );
+
+  }
+
+  void applyOp(){
+    /*
+    if( separate ){
+      glStencilOpSeparate( GL_FRONT,
+                           stencilOp.stencilFail,
+                           stencilOp.stencilPassDepthFail,
+                           stencilOp.stencilPassDepthPass );
+      glStencilOpSeparate( GL_BACK,
+                           stencilBackOp.stencilFail,
+                           stencilBackOp.stencilPassDepthFail,
+                           stencilBackOp.stencilPassDepthPass );
+    }
+    else
+    */
+    glStencilOp( stencilOp.stencilFail,
+                 stencilOp.stencilPassDepthFail,
+                 stencilOp.stencilPassDepthPass );
+  }
+
+  bool operator != ( const MyGL_Stencil& rhs ){
+    return *(static_cast<MyGL_Stencil*>(this)) != rhs;
+  }
+};
+
+//MyGL_Stencil& operator = ( MyGL_Stencil& lhs, const Stencil& rhs ){
+//  lhs = static_cast<MyGL_Stencil>(rhs);
+//  return lhs;
+//}
+
+struct StencilState : public utils::StatefulState<Stencil> {
+
+  void forceCb() override {
+    current.applyOn();
+    current.applyWriteMask();
+    current.applyTest();
+    current.applyOp();
+  }
+
+  void applyCb( const Stencil& active ) override {
+    /*
+    if( active.separate != current.separate ){
+      forceCb();
+      return;
+    }
+    */
+
+    if( active.on != current.on )
+      current.applyOn();
+    if( active.writeMask != current.writeMask )
+      current.applyWriteMask();
+    if( active.stencilTest != current.stencilTest )
+      current.applyTest();
+    if( active.stencilOp != current.stencilOp )
+      current.applyOp();
+    /*
+    if( active.stencilTest != current.stencilTest ||
+        active.stencilBackTest != current.stencilBackTest )
+      current.applyTest();
+    if( active.stencilOp != current.stencilOp ||
+        active.stencilBackOp != current.stencilBackOp )
+      current.applyOp();
+    */
+  }
+
+  static std::unique_ptr< utils::StatefulState<Stencil> > makeUnique(){
+    return std::unique_ptr<utils::StatefulState<Stencil> >( new StencilState() );
+  }
+};
+
+
+struct ColorMask : MyGL_ColorMask {
+
+  ColorMask(){
+    red = green = blue = alpha = GL_TRUE;
+  }
+
+  ColorMask& operator = ( const MyGL_ColorMask& rhs ){
+    *(static_cast<MyGL_ColorMask *>(this)) = rhs;
+    return *this;
+  }
+
+  void apply(){
+    glColorMask( red, green, blue, alpha );
+  }
+
+  bool operator != (const MyGL_ColorMask& rhs ) const {
+    return red != rhs.red ||
+        green != rhs.green ||
+        blue != rhs.blue ||
+        alpha != rhs.alpha;
+  }
+
+};
+
+//MyGL_ColorMask& operator = ( MyGL_ColorMask& lhs, const ColorMask& rhs ){
+//  lhs = static_cast<MyGL_ColorMask>(rhs);
+//  return lhs;
+//}
+
+struct ColorMaskState : public utils::StatefulState<ColorMask> {
+
+  void forceCb() override {
+    current.apply();
+  }
+
+  void applyCb( const ColorMask& active ) override {
+    if( active != current )
+      current.apply();
+  }
+
+  static std::unique_ptr< utils::StatefulState<ColorMask> > makeUnique(){
+    return std::unique_ptr< utils::StatefulState<ColorMask> >( new ColorMaskState() );
+  }
+};
 
 struct UniformSetter{
   using Variant =
@@ -218,15 +422,12 @@ struct UniformSetter{
   UniformSetter( std::function<MyGL_Mat4()> value_ ) : value( value_) {}
 
   void set( GLint loc ){
-
     auto visitor = [&]( auto p ){
       set_( p, loc );
     };
-    //std::string s(typeid(value.get()).name());
-    //utils::logout( "FXR %s: type %s\n", __FUNCTION__, s.c_str() );
     std::visit( visitor, value );
-
   }
+
 };
 
 }

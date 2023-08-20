@@ -1,14 +1,55 @@
 #include <vector>
+#include <map>
 #include <memory>
+#include <variant>
 
 namespace strutils{
 
-bool equals( const char *str, const char* str2, int n = 0 ){
+bool equals( const char *lhs, const char* rhs, int n = 0 ){
   if( n <= 0 )
-    return 0 == std::strcmp( str, str2 );
-
-  return 0 == std::strncmp( str, str2, n );
+    return 0 == std::strcmp( lhs, rhs );
+  return 0 == std::strncmp( lhs, rhs, n );
 }
+
+bool equals( const std::string_view& lhs, const char* rhs, int n = 0 ){
+  return equals( lhs.data(), rhs );
+}
+
+bool equals( const std::string_view& lhs, const std::string_view& rhs, int n = 0 ){
+  return equals( lhs.data(), rhs.data(), n );
+}
+
+bool toUnsigned( std::string_view s, uint64_t &v ){
+  v = 0;
+  uint64_t mul = 1;
+  for( auto c : s ){
+    if( c < '0' || c > '9' )
+      return false;
+    v = v * mul + uint64_t( (int)c - (int)'0' );
+    mul = 10;
+  }
+  return true;
+}
+
+bool toSigned( std::string_view s, int64_t &v ){
+  v = 0;
+  int64_t mul = 1;
+  auto it = s.begin();
+  if( *it == '-' ){
+    mul *= -1;
+    it++;
+  }
+  for( ; it != s.end(); ++it ){
+    auto c = *it;
+    if( c < '0' || c > '9' )
+      return false;
+    v = v * mul + int64_t( (int)c - (int)'0' );
+    mul = 10;
+  }
+
+  return true;
+}
+
 
 struct Lut{
   char chars[256];
@@ -260,6 +301,124 @@ template< int N> struct LineFeed{
     return l;
   }
 
+};
+
+
+template<typename T>
+struct KVParse{
+public:
+
+  using TokenFunc = std::function<bool(std::string_view)>;
+  using ValueFunc = std::function<bool(std::string_view, T&) >;
+
+  using TokenType = std::variant < std::string, TokenFunc >;
+  using ValueType = std::variant < T, ValueFunc >;
+
+  struct Token{
+  public:
+    TokenType value;
+
+    Token( std::string_view s ){
+      std::string str( s.data() );
+      value = std::move( str );
+    }
+    Token( TokenFunc func ) : value(func) {}
+
+    bool matches( std::string_view token, std::string other ) const {
+      return equals( token, other );
+    }
+
+    bool matches( std::string_view token, TokenFunc other ) const {
+      return other( token );
+    }
+
+    bool matches( std::string_view token )  const {
+      auto match = [&]( auto&& arg ){
+        return matches( token, arg );
+      };
+      return std::visit(  match, value );
+    }
+  };
+
+  struct Value{
+  public:
+    Token name;
+    ValueType actual;
+    Value( std::string_view nameTag, T value ) : name( nameTag ), actual(value){}
+    Value( std::string_view nameTag, ValueFunc valueFunc ) : name( nameTag ), actual(valueFunc){}
+    Value( TokenFunc nameFunc, ValueFunc valueFunc ) : name( nameFunc ), actual( valueFunc ){}
+    Value( TokenFunc nameFunc, T value ) : name( nameFunc ), actual( value ){}
+
+    bool resolve( T& value, std::string_view token, T& from ) {
+      value = std::move( from );
+      return true;
+    }
+    bool resolve( T& value, std::string_view token, ValueFunc& from ) { return from( token, value ); }
+
+    bool resolve( T& out, std::string_view token ) {
+      auto visit = [&]( auto&& val ){
+        return resolve( out, token, val );
+      };
+      return std::visit( visit, actual );
+    }
+  };
+
+
+  std::vector<Token> aliases;
+  std::vector<Value> values;
+  T fallback;
+
+  KVParse( const T& fallbackValue ) : fallback( fallbackValue ) {}
+
+  void keyAlias( std::string_view key ){
+    auto a = Token( key );
+    aliases.push_back( std::move(a) );
+  }
+
+  void supportValue( std::string_view name, T value ){
+    auto v = Value( name, value );
+    values.push_back( std::move(v) );
+  }
+
+
+  void supportValue( std::string_view name, ValueFunc valueFunc ){
+    auto v = Value( name, valueFunc );
+    values.push_back( std::move(v) );
+  }
+
+
+  void supportValue( TokenFunc nameFunc, T value ){
+    auto v = Value( nameFunc, value );
+    values.push_back( std::move(v) );
+  }
+
+
+  void supportValue( TokenFunc nameFunc, ValueFunc valueFunc ){
+    auto v = Value( nameFunc, valueFunc );
+    values.push_back( std::move(v) );
+  }
+
+  std::pair<bool, bool> parseTokens( std::string_view keyToken, std::string_view valueToken, T& output ) {
+    output = fallback;
+
+    bool found = false;
+    for( const auto& alias : aliases ){
+      if( alias.matches( keyToken ) ){
+        found = true;
+        break;
+      }
+    }
+    if( !found )
+      return { false, false };
+
+    for( auto& value : values ){
+      if( value.name.matches( valueToken ) ){
+        bool pass = value.resolve( output, valueToken );
+        return { true, pass };
+      }
+    }
+    return { true, false };
+  }
 };
 
 }

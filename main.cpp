@@ -8,14 +8,15 @@
 
 #include <GL/glew.h>
 #include <GL/gl.h>
+
 #include "public/mygl.h"
 #include "utils/stateful.h"
 
 #include "utils.h"
 #include "colors.h"
-#include "vertices.h"
+#include "streams.h"
+#include "bufferobjs.h"
 #include "textures.h"
-#include "bufferobjects.h"
 #include "mygl.h"
 #include "public/vecdefs.h"
 #include "shaders.h"
@@ -25,35 +26,53 @@ using namespace mygl;
 
 MyGL myGL;
 
-std::shared_ptr< utils::Stateful<Cull>  > statefulCull  = nullptr;
-std::shared_ptr< utils::Stateful<Depth> > statefulDepth = nullptr;
-std::shared_ptr< utils::Stateful<Blend> > statefulBlend = nullptr;
+
+std::shared_ptr< utils::Stateful<Cull>      > statefulCull      = nullptr;
+std::shared_ptr< utils::Stateful<Depth>     > statefulDepth     = nullptr;
+std::shared_ptr< utils::Stateful<Blend>     > statefulBlend     = nullptr;
+std::shared_ptr< utils::Stateful<Stencil>   > statefulStencil   = nullptr;
+std::shared_ptr< utils::Stateful<ColorMask> > statefulColorMask = nullptr;
 
 MyGL *MyGL_initialize( MyGL_LogFunc logger, int initialize_glew, uint32_t stream_count ){
   utils::logfunc(logger);
   if( initialize_glew ){
-    glewInit();
-    utils::logout( "GLEW initialized" );
+    auto err = glewInit();
+    if (GLEW_OK != err)
+      utils::logout( "GLEW Error: %s\n", glewGetErrorString( err ) );
+    else
+      utils::logout( "GLEW initialized" );
   }
+
 
   statefulCull  = std::make_shared<utils::Stateful<Cull>> ( CullState::makeUnique()  );
   statefulDepth = std::make_shared<utils::Stateful<Depth>>( DepthState::makeUnique() );
   statefulBlend = std::make_shared<utils::Stateful<Blend>>( BlendState::makeUnique() );
+  statefulStencil = std::make_shared<utils::Stateful<Stencil>>( StencilState::makeUnique() );
+  statefulColorMask = std::make_shared<utils::Stateful<ColorMask>>( ColorMaskState::makeUnique() );
 
   statefulCull->force();
   statefulDepth->force();
   statefulBlend->force();
+  statefulStencil->force();
+
+  myGL.cull = static_cast<MyGL_Cull>(statefulCull->current() );
+  myGL.depth = static_cast<MyGL_Depth>(statefulDepth->current() );
+  myGL.blend = static_cast<MyGL_Blend>(statefulBlend->current() );
+  myGL.stencil = static_cast<MyGL_Stencil>(statefulStencil->current() );
+  myGL.colorMask = static_cast<MyGL_ColorMask>(statefulColorMask->current() );
+
 
   stream_count = stream_count < 65536 * 3 ? 65536 * 3 : stream_count;
 
-  //myGL.cull = statefulCull.current();
-  utils::logout( " * cull is  (CCW front).");
-
-  //myGL.depth = statefulDepth.current();;
-  utils::logout( " * depth test/write disabled/yes.");
-
-  //myGL.blend = statefulBlend.current();
-  utils::logout( " * blend disabled.");
+  utils::logout( " * cull is %s (%s).", myGL.cull.on ? "enabled" : "disabled", myGL.cull.frontIsCCW ? "CCW front" : "CW front" );
+  utils::logout( " * depth test/write is %s/%s.", myGL.depth.on ? "true" : "false", myGL.depth.depthWrite ? "true" : "false" );
+  utils::logout( " * blend is %s.", myGL.blend.on ? "enabled" : "disabled");
+  utils::logout( " * stencil is %s.", myGL.stencil.on ? "enabled" : "disabled");
+  utils::logout( " * color write for RGBA is { %s, %s, %s, %s }.",
+                 myGL.colorMask.red ? "on" : "off",
+                 myGL.colorMask.green ? "on" : "off",
+                 myGL.colorMask.blue ? "on" : "off",
+                 myGL.colorMask.alpha ? "on" : "off" );
 
   positionStream = std::make_shared<VertexAttributeStream4fv>( "Position", stream_count );
   myGL.positions = positionStream->name;
@@ -115,11 +134,15 @@ void MyGL_terminate(){
 
 MyGL_VertexAttributeStream MyGL_vertexAttributeStream( const char *name ){
   MyGL_VertexAttributeStream s;
+  MyGL_VertexAttrib attrib;
+
+  attrib.components = MYGL_X;
+  attrib.normalized = GL_FALSE;
+  attrib.type = MYGL_FLOAT;
 
   s.info.name = MyGL_str64("");
-  s.info.size = 0;
   s.info.maxCount = 0;
-  s.info.type = MyGL_AttribType::MYGL_FLOAT;
+  s.info.attrib = attrib;
 
   auto matches = [&]( MyGL_Str64& stream_name ){
     return 0 == strcmp( name, stream_name.chars );
@@ -127,38 +150,30 @@ MyGL_VertexAttributeStream MyGL_vertexAttributeStream( const char *name ){
 
   std::string nam = name;
   if( matches( positionStream->name ) ){
-    auto t = positionStream->type();
     s.info.name = positionStream->name;
-    s.info.type = t.t;
-    s.info.size = t.n;
+    s.info.attrib = positionStream->type();
     s.info.maxCount = positionStream->values.size();
     s.arr.p = (void *)positionStream->values.data();
     return s;
   }
   if( matches( normalStream->name ) ){
-    auto t = normalStream->type();
     s.info.name = normalStream->name;
-    s.info.type = t.t;
-    s.info.size = t.n;
+    s.info.attrib = normalStream->type();
     s.info.maxCount = normalStream->values.size();
     s.arr.p = (void *)normalStream->values.data();
     return s;
   }
   if( matches( colorStream->name )  ){
-    auto t = colorStream->type();
     s.info.name = colorStream->name;
-    s.info.type = t.t;
-    s.info.size = t.n;
+    s.info.attrib = colorStream->type();
     s.info.maxCount = colorStream->values.size();
     s.arr.p = (void *)colorStream->values.data();
     return s;
   }
   for( int i = 0; i < MYGL_MAX_SAMPLERS; i++ ){
     if( matches( uvsStream[i]->name ) ){
-      auto t = uvsStream[i]->type();
       s.info.name = uvsStream[i]->name;
-      s.info.type = t.t;
-      s.info.size = t.n;
+      s.info.attrib = uvsStream[i]->type();
       s.info.maxCount = uvsStream[i]->values.size();
       s.arr.p = (void *)uvsStream[i]->values.data();
       return s;
@@ -208,6 +223,19 @@ void MyGL_applyBlend(){
   statefulBlend->apply();
 }
 
+void MyGL_applyStencil(){
+  statefulStencil->current() = myGL.stencil;
+  statefulStencil->apply();
+}
+
+
+void MyGL_applyColorMask(){
+  statefulColorMask->current() = myGL.colorMask;
+  statefulColorMask->apply();
+}
+
+
+
 void MyGL_resetCull(){
   statefulCull->current() = myGL.cull;
   statefulCull->force();
@@ -222,6 +250,17 @@ void MyGL_resetBlend(){
   statefulBlend->current() = myGL.blend;
   statefulBlend->force();
 }
+
+void MyGL_resetStencil(){
+  statefulStencil->current()= myGL.stencil;
+  statefulStencil->force();
+}
+
+void MyGL_resetColorMask(){
+  statefulColorMask->current()= myGL.colorMask;
+  statefulColorMask->force();
+}
+
 
 void MyGL_bindSamplers(){
   for( size_t i = 0; i < MYGL_MAX_SAMPLERS; i++ ){
@@ -288,5 +327,83 @@ GLboolean MyGL_createTexture2D( const char *name,
   named2DTextures[ name ] = tex;
   utils::logout( "2D texture '%s' created:", name );
   tex->logInfo();
+  return GL_TRUE;
+}
+
+void MyGL_clear(){
+  //GLuint flags = 0;
+  //if( myGL.)
+}
+
+
+
+void MyGL_drawVbo( const char *name, MyGL_Primitive primitive, GLint start_index, GLsizei index_count ){
+  auto f = namedVbos.find( std::string(name) );
+  if( f == namedVbos.end() )
+    return;
+  auto vbo = f->second;
+  auto get = shaders::Materials::get( myGL.material.chars );
+  if( !get.has_value())
+    return;
+  auto& material = get.value().get();
+
+  vbo->bind();
+  for( uint32_t i = 0; i < material.numPasses(); i++ ){
+    material.apply(i);
+    glDrawArrays( primitive, start_index, index_count );
+  }
+}
+
+void MyGL_vboPush( const char *name ){
+  auto f = namedVbos.find( std::string(name) );
+  if( f != namedVbos.end() )
+    f->second->push();
+}
+
+MyGL_VboStream MyGL_vboStream( const char *name ){
+  MyGL_VboStream stream;
+  stream.data = nullptr;
+  stream.info.maxCount   = 0;
+  stream.info.numAttribs = 0;
+  auto f = namedVbos.find( std::string(name) );
+  if( f == namedVbos.end() )
+    return stream;
+  auto vbo = f->second;
+  stream.data = vbo->dataPtr.p;
+  stream.info.numAttribs = (GLuint)vbo->attribs.count;
+  for( size_t i = 0; i < vbo->attribs.count; i++ ){
+    stream.info.attribs[i] = static_cast<MyGL_VertexAttrib>( vbo->attribs.attribs[i] );
+  }
+  stream.info.name = MyGL_str64( f->first.c_str() );
+  return stream;
+}
+
+GLboolean MyGL_createVbo( const char *name, uint32_t size, const MyGL_VertexAttrib *attribs, uint32_t num_attribs ){
+  if( !name ){
+    utils::logout( "error: vbo has no name" );
+    return GL_FALSE;
+  }
+  if( !size ){
+    utils::logout( "error: vbo has no size" );
+    return GL_FALSE;
+  }
+  if( !attribs || !num_attribs ){
+    utils::logout( "error: vbo has no attributes specified" );
+    return GL_FALSE;
+  }
+  if( num_attribs > MYGL_MAX_VERTEX_ATTRIBS ){
+    utils::logout( "warning: no. attributes specified exceeds max no." );
+    num_attribs = MYGL_MAX_VERTEX_ATTRIBS;
+  }
+  auto f = namedVbos.find( std::string(name) );
+  if( f != namedVbos.end() )
+    utils::logout( "replacing vbo '%s'", name );
+
+  std::vector<MyGL_VertexAttrib> list;
+  for( uint32_t i = 0; i < num_attribs; i++ ){
+    list.push_back( attribs[i] );
+  }
+  mygl::namedVbos[ name ] = std::make_shared<mygl::Vbo>( (size_t)size, list );
+
   return GL_TRUE;
 }

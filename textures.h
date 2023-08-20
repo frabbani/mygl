@@ -18,7 +18,7 @@ namespace mygl
     GLenum  format;
     GLenum  type;
     size_t  size;
-    MyGL_Ptr pixels;
+    MyGL_ArrPtr pixels;
   private:
     TextureData( GLenum  format_, GLenum type_, size_t size_) : format(format_), type(type_){
       size = size_ < sizeof( MyGL_Vec4 ) ? sizeof( MyGL_Vec4 ) : size_;
@@ -37,7 +37,6 @@ namespace mygl
 
   template<int N> struct Texture{
 
-  static constexpr int usageUnit = GL_TEXTURE0 + 8;
   std::string name;
   size_t sizes[N];
   GLenum target;
@@ -55,7 +54,7 @@ namespace mygl
     mipmapped(mipmapped_),
     repeat(repeat_){
 
-    glActiveTexture( usageUnit );
+    glActiveTexture( MYGL_TEXTURE_USAGE_UNIT );
     glGenTextures  ( 1, &tex );
     glBindTexture  ( target, tex );
 
@@ -99,7 +98,7 @@ namespace mygl
     return s;
   }
 
-  void pullData( GLuint level, std::shared_ptr<TextureData> data, GLuint unit = usageUnit ){
+  void pullData( GLuint level, std::shared_ptr<TextureData> data, GLuint unit = MYGL_TEXTURE_USAGE_UNIT ){
     if( level > numMipLevels() )
       return;
 
@@ -115,7 +114,7 @@ namespace mygl
   virtual void logInfo() {
     int  w, h, d, f, r, g, b, a, l, i;
 
-    glActiveTexture( usageUnit );
+    glActiveTexture( MYGL_TEXTURE_USAGE_UNIT );
     glBindTexture( target, tex );
     glGetTexLevelParameteriv( target, 0, GL_TEXTURE_WIDTH, &w );
     glGetTexLevelParameteriv( target, 0, GL_TEXTURE_HEIGHT, &h );
@@ -195,7 +194,7 @@ struct Texture2D : public Texture<2> {
     glBindTexture  ( target, tex );
   }
 
-  void pushData( GLint level, GLint x, GLint y, GLsizei w, GLsizei h, std::shared_ptr<TextureData> data, GLuint unit = usageUnit ){
+  void pushData( GLint level, GLint x, GLint y, GLsizei w, GLsizei h, std::shared_ptr<TextureData> data, GLuint unit = MYGL_TEXTURE_USAGE_UNIT ){
     if( level > (GLint)numMips || data->size < (size_t)( w * h ) )
       return;
     glActiveTexture( unit );
@@ -203,7 +202,7 @@ struct Texture2D : public Texture<2> {
     glTexSubImage2D( target, level,  x, y, w, h, data->format, data->type, data->pixels.p );
   }
 
-  void pushData( GLint level, std::shared_ptr<TextureData> data, GLuint unit = usageUnit ){
+  void pushData( GLint level, std::shared_ptr<TextureData> data, GLuint unit = MYGL_TEXTURE_USAGE_UNIT ){
     if( level > (GLint)numMips || data->size < getSize() )
       return;
 
@@ -213,6 +212,32 @@ struct Texture2D : public Texture<2> {
   }
 
 };
+/*
+GLuint mygl_texture_2d_array_init( uint32 unit, int32 filtered, int32 mipmapped, int32 repeat ){
+  GLuint tex = 0;
+  glActiveTexture( GL_TEXTURE0 + unit );
+  glGenTextures  ( 1, &tex );
+  glBindTexture  ( GL_TEXTURE_2D_ARRAY, tex );
+
+  if( filtered ){
+    glTexParameteri( GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    if( mipmapped )
+      glTexParameteri( GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+    else
+      glTexParameteri( GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  }
+  else{
+    glTexParameteri( GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+    if( mipmapped )
+      glTexParameteri( GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST );
+    else
+      glTexParameteri( GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+  }
+  mygl_texture_2d_array_wrap( repeat );
+
+  return tex;
+}
+*/
 
 std::map< std::string, std::shared_ptr<Texture<1>>> named1DTextures;
 std::map< std::string, std::shared_ptr<Texture<2>>> named2DTextures;

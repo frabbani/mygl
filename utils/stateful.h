@@ -24,16 +24,16 @@ template<typename T> class Stateful {
 public:
 
   Stateful( std::unique_ptr< StatefulState<T> > initial ){
-    state = std::move(initial);
+    state = std::move( initial );
     if( !internal ){
-      internal = std::make_unique<T>();
+      internal = new T;
       force();
     }
   }
 
   void force(){
     state->forceCb();
-    *internal = state->current;;
+    *internal = state->current;
   }
 
   void apply(){
@@ -46,11 +46,11 @@ public:
   T& current(){ return state->current; }
 
 private:
-  static std::unique_ptr<T> internal;
+  static T *internal;
   std::unique_ptr< StatefulState<T> > state;
 };
 
 template<typename T>
-std::unique_ptr<T> Stateful<T>::internal = nullptr;
+T *Stateful<T>::internal = nullptr;
 
 }
