@@ -3,10 +3,42 @@
 #include "public/mygl.h"
 
 #include "utils/stateful.h"
-#include "utils/union.h"
 
 namespace mygl
 {
+  namespace trace{
+    struct Output{
+      char *output = nullptr;
+      uint64_t len = 0;
+      Output( char *output_, uint64_t len_ ) : output(output_), len(len_) {
+        if( output && len ){
+          output[0] = '\0';
+          snprintf( output, len, "******* STENCIL TRACE *******\n");
+        }
+      }
+      ~Output(){ output = nullptr; len = 0; }
+      void print( const char *format, ... ){
+       if( !output || !len )
+         return;
+       char str[ 1024 ];
+       va_list args;
+       __builtin_va_start( args,format );
+       vsprintf( str, format, args );
+       __builtin_va_end(args);
+       strncat( output, str, len-1 );
+     }
+     void tag( const char *tag ){
+       if( !output || !len )
+         return;
+       char str[1024];
+       snprintf( str, 1023, "\n[%s]\n", tag );
+       strncat( output, str, len-1 );
+     }
+    };
+    std::optional<Output> stencilOut = std::nullopt;
+  }
+
+
 
 struct Cull : MyGL_Cull {
   Cull(){
@@ -43,7 +75,7 @@ struct Cull : MyGL_Cull {
 
 
 //MyGL_Cull& operator = ( MyGL_Cull& lhs, const Cull& rhs ){
-//  lhs = static_cast<MyGL_Cull>(rhs);
+//  lhs =   *(static_cast<const MyGL_Cull*>(&rhs));
 //  return lhs;
 //}
 
@@ -142,16 +174,27 @@ struct DepthState : public utils::StatefulState<Depth> {
 
 
 struct Blend : MyGL_Blend {
-
+  static int newID(){
+    static int i = 123;
+    return ++i;
+  }
+  int id;
   Blend(){
     on = GL_FALSE;
     blendOp.src = MYGL_SRC_ALPHA;
     blendOp.dst = MYGL_ONE_MINUS_SRC_ALPHA;
     blendOp.func = MYGL_FUNC_ADD;
+    id = newID();
   }
 
   Blend& operator = ( const MyGL_Blend& rhs ){
+    if( on == rhs.on &&
+        blendOp.src == rhs.blendOp.src &&
+        blendOp.dst == rhs.blendOp.dst &&
+        blendOp.func == rhs.blendOp.func )
+      return *this;
     *(static_cast<MyGL_Blend *>(this)) = rhs;
+    id = newID();
     return *this;
   }
 
@@ -170,10 +213,8 @@ struct Blend : MyGL_Blend {
     glBlendEquation( blendOp.func );
   }
 
-  bool operator != (const MyGL_Blend& rhs ) const {
-    return on != rhs.on ||
-        blendOp.src != rhs.blendOp.src || blendOp.dst != rhs.blendOp.dst ||
-        blendOp.func != rhs.blendOp.func;
+  bool operator != (const Blend& rhs ) const {
+    return rhs.id != id;
   }
 
 };
@@ -233,34 +274,50 @@ bool operator != (const MyGL_Stencil& lhs, const MyGL_Stencil& rhs ){
 }
 
 struct Stencil : public MyGL_Stencil {
-
+  static int newID(){
+    static int i = 123;
+    return ++i;
+  }
+  int id;
   Stencil(){
     on = GL_FALSE;
     // separate = GL_FALSE;
-    writeMask = 0xffffffff;
+    writeMask = 0;
     stencilOp.stencilFail = stencilOp.stencilPassDepthFail = stencilOp.stencilPassDepthPass = MYGL_KEEP;
-    stencilTest.ref = 0;
-    stencilTest.mask = 0xffffffff;
-    stencilTest.mode = MYGL_ALWAYS;
+    stencilTest.ref  = 0;
+    stencilTest.mask = 0;
+    stencilTest.mode = MYGL_NEVER;
+    id = newID();
     // stencilBackOp = stencilOp;
     // stencilBackTest = stencilTest;
   }
 
   Stencil& operator = ( const MyGL_Stencil& rhs ){
-    *(static_cast<MyGL_Stencil *>(this)) = rhs;
+    auto p = static_cast<MyGL_Stencil *>(this);
+    if( *p != rhs ){
+      *p = rhs;
+      id = newID();
+    }
     return *this;
   }
 
   void applyOn(){
     if( on )
-      glEnable ( GL_STENCIL );
+      glEnable ( GL_STENCIL_TEST );
     else
-      glDisable( GL_STENCIL );
+      glDisable( GL_STENCIL_TEST );
+    if( trace::stencilOut.has_value() ){
+      if( on )
+        trace::stencilOut.value().print( "stencil is on.   " );
+      else
+        trace::stencilOut.value().print( "stencil is off.   " );
+    }
   }
-
 
   void applyWriteMask(){
     glStencilMask( writeMask );
+    if( trace::stencilOut.has_value() )
+      trace::stencilOut.value().print( "write-mask is %x.   ", writeMask );
   }
 
   void applyTest(){
@@ -270,8 +327,15 @@ struct Stencil : public MyGL_Stencil {
       glStencilFuncSeparate( GL_BACK, stencilBackTest.mode, stencilBackTest.ref, stencilBackTest.mask );
     }
     else */
-      glStencilFunc( stencilTest.mode, stencilTest.ref, stencilTest.mask );
+    glStencilFunc( stencilTest.mode, stencilTest.ref, stencilTest.mask );
 
+    if( trace::stencilOut.has_value() ){
+      std::string_view stencilModeToString( MyGL_StencilMode );
+      trace::stencilOut.value().print( "mode is %s, ref is %d, test-mask is %x.   ",
+                                       stencilModeToString( stencilTest.mode ).data(),
+                                       stencilTest.ref,
+                                       stencilTest.mask );
+    }
   }
 
   void applyOp(){
@@ -291,25 +355,44 @@ struct Stencil : public MyGL_Stencil {
     glStencilOp( stencilOp.stencilFail,
                  stencilOp.stencilPassDepthFail,
                  stencilOp.stencilPassDepthPass );
+
+    if( trace::stencilOut.has_value() ){
+      std::string_view stencilActionToString( MyGL_StencilAction action );
+      trace::stencilOut.value().print( "fail is %s, depth-fail is %s, pass is %s.   ",
+                                       stencilActionToString(stencilOp.stencilFail).data(),
+                                       stencilActionToString(stencilOp.stencilPassDepthFail).data(),
+                                       stencilActionToString(stencilOp.stencilPassDepthPass).data() );
+    }
+
   }
 
-  bool operator != ( const MyGL_Stencil& rhs ){
-    return *(static_cast<MyGL_Stencil*>(this)) != rhs;
+  void debug(){
+    utils::logout( "stencil %s", on ? "enabled" : "disabled" );
+    utils::logout( "stencil mask is %x", writeMask );
+    utils::logout( "stencil test is %d / %x / %x",
+                   stencilTest.mode, stencilTest.ref, stencilTest.mask );
+    utils::logout( "stencil op: %d, %d, %d",
+                   stencilOp.stencilFail,
+                   stencilOp.stencilPassDepthFail,
+                   stencilOp.stencilPassDepthPass );
+  }
+
+  bool operator != (const Stencil& rhs ) const {
+    return rhs.id != id;
   }
 };
-
-//MyGL_Stencil& operator = ( MyGL_Stencil& lhs, const Stencil& rhs ){
-//  lhs = static_cast<MyGL_Stencil>(rhs);
-//  return lhs;
-//}
 
 struct StencilState : public utils::StatefulState<Stencil> {
 
   void forceCb() override {
+    if( trace::stencilOut.has_value() )
+      trace::stencilOut.value().print( "force callback:\n * ");
     current.applyOn();
     current.applyWriteMask();
     current.applyTest();
     current.applyOp();
+    if( trace::stencilOut.has_value() )
+      trace::stencilOut.value().print( "\n");
   }
 
   void applyCb( const Stencil& active ) override {
@@ -320,6 +403,8 @@ struct StencilState : public utils::StatefulState<Stencil> {
     }
     */
 
+    if( trace::stencilOut.has_value() )
+      trace::stencilOut.value().print( "apply callback:\n * ");
     if( active.on != current.on )
       current.applyOn();
     if( active.writeMask != current.writeMask )
@@ -328,6 +413,9 @@ struct StencilState : public utils::StatefulState<Stencil> {
       current.applyTest();
     if( active.stencilOp != current.stencilOp )
       current.applyOp();
+    if( trace::stencilOut.has_value() )
+      trace::stencilOut.value().print( "\n");
+
     /*
     if( active.stencilTest != current.stencilTest ||
         active.stencilBackTest != current.stencilBackTest )
@@ -390,7 +478,7 @@ struct ColorMaskState : public utils::StatefulState<ColorMask> {
 };
 
 struct UniformSetter{
-  using Variant =
+  using Value =
       std::variant< const float*, const MyGL_Vec2*, const MyGL_Vec3*, const MyGL_Vec4*, const MyGL_Mat4*, std::function<MyGL_Mat4()> >;
 
   void set_( const float *v,     GLint loc ){
@@ -412,7 +500,7 @@ struct UniformSetter{
     glUniformMatrix4fv( loc, 1, GL_TRUE, v().f16 );
   }
 
-  Variant value;
+  Value value;
 
   UniformSetter( const float *value_ ) : value(value_) {}
   UniformSetter( const MyGL_Vec2 *value_ ) : value( value_) {}
@@ -422,7 +510,7 @@ struct UniformSetter{
   UniformSetter( std::function<MyGL_Mat4()> value_ ) : value( value_) {}
 
   void set( GLint loc ){
-    auto visitor = [&]( auto p ){
+    auto visitor = [&]( auto&& p ){
       set_( p, loc );
     };
     std::visit( visitor, value );

@@ -25,32 +25,36 @@ public:
 
   Stateful( std::unique_ptr< StatefulState<T> > initial ){
     state = std::move( initial );
-    if( !internal ){
-      internal = new T;
+    if( firstTime ){
       force();
+      firstTime = false;
     }
   }
 
   void force(){
     state->forceCb();
-    *internal = state->current;
+    internal = state->current;
   }
 
   void apply(){
-    if( state->current != *internal ){
-      state->applyCb( *internal );
-      *internal = state->current;
+    if( state->current != internal ){
+      state->applyCb( internal );
+      internal = state->current;
     }
   }
 
   T& current(){ return state->current; }
 
 private:
-  static T *internal;
+  static bool firstTime;
+  static T internal;
   std::unique_ptr< StatefulState<T> > state;
 };
 
 template<typename T>
-T *Stateful<T>::internal = nullptr;
+T Stateful<T>::internal;
+
+template<typename T>
+bool Stateful<T>::firstTime = true;
 
 }

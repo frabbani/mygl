@@ -407,3 +407,16 @@ GLboolean MyGL_createVbo( const char *name, uint32_t size, const MyGL_VertexAttr
 
   return GL_TRUE;
 }
+
+void MyGL_Trace_Stencil_set( char *output, uint32_t size ){
+  if( !size || !output ){
+    trace::stencilOut = std::nullopt;
+    return;
+  }
+  trace::stencilOut = trace::Output( output, size );
+}
+
+void MyGL_Trace_Stencil_tag( const char *tag ){
+  if( trace::stencilOut.has_value() )
+   trace::stencilOut.value().tag( tag );
+}

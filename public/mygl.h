@@ -140,8 +140,6 @@ typedef struct MyGL_VertexAttributeStream_s{
   MyGL_ArrPtr arr;
 }MyGL_VertexAttributeStream;
 
-typedef void (*MyGL_PushFunc)( const char * );
-
 typedef struct MyGL_VboStream_s{
   struct{
     MyGL_Str64 name;
@@ -284,6 +282,9 @@ DLLEXPORT void MyGL_drawVbo( const char *name, MyGL_Primitive primitive, GLint s
 DLLEXPORT MyGL_VboStream MyGL_vboStream( const char *name );
 DLLEXPORT void MyGL_vboPush( const char *name );
 DLLEXPORT GLboolean MyGL_createVbo( const char *name, uint32_t size, const MyGL_VertexAttrib *attribs, uint32_t num_attribs );
+
+DLLEXPORT void MyGL_Trace_Stencil_set( char *output, uint32_t size );
+DLLEXPORT void MyGL_Trace_Stencil_tag( const char *tag );
 
 #ifdef __cplusplus
 } /* extern "C" */

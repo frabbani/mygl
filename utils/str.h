@@ -99,22 +99,22 @@ public:
   }
   Buffer( std::string_view str, std::optional<Lut> lut = std::nullopt ){ init( str, lut ); }
 
-  const char *skip( int n ) const {
+  const char *at( int n ) const {
     n = n < 0 ? 0 : n >= len ? len-1 : n;
     return &chars[n];
   }
 
-  const char *skipOver( int n, char c ) const {
-    n = n < 0 ? 0 : n > len-1 ? len-1 : n;
-    while( n < len ){
-      if( chars[n] != c )
+  const char *skipOver( int o, char c ) const {
+    o = o < 0 ? 0 : o > len-1 ? len-1 : o;
+    while( o < len ){
+      if( chars[o] != c )
         break;
-      n++;
+      o++;
     }
-    if( n == len )
+    if( o == len )
       return nullptr;
 
-    return &chars[n];
+    return &chars[o];
   }
 
   bool beginsWith( const char *beg ) const {
@@ -366,8 +366,9 @@ public:
 
   std::vector<Token> aliases;
   std::vector<Value> values;
-  T fallback;
+  std::optional<T> fallback = std::nullopt;
 
+  KVParse() {}
   KVParse( const T& fallbackValue ) : fallback( fallbackValue ) {}
 
   void keyAlias( std::string_view key ){
@@ -399,7 +400,8 @@ public:
   }
 
   std::pair<bool, bool> parseTokens( std::string_view keyToken, std::string_view valueToken, T& output ) {
-    output = fallback;
+    if( fallback.has_value())
+      output = fallback.value();
 
     bool found = false;
     for( const auto& alias : aliases ){
