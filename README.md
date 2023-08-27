@@ -133,6 +133,25 @@ void main(){
 
 ```
 
+Shader Header Example:
+```
+#ifdef TRANSFORM
+uniform mat4 _P;
+uniform mat4 _V;
+uniform mat4 _W;
+uniform mat4 _PVW;
+#endif
+
+#ifdef __vert__
+#define vary out
+#endif
+
+
+#ifdef __frag__
+#define vary in
+#endif
+```
+
 Shader Pass Properties (aliases for some of these exist):
 ```
 /**
