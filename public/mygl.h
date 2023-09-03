@@ -2,7 +2,6 @@
 
 
 #include <GL/glew.h>
-#define NO_SDL_GLEXT
 
 #include "strn.h"
 #include "vec.h"
@@ -219,7 +218,7 @@ typedef struct MyGL_s{
 
   MyGL_Vec4 clearColor;
   float     clearDepth;
-  GLuint    clearStencil;
+  GLint     clearStencil;
 
   MyGL_Primitive primitive;
   GLuint numPrimitives;
@@ -267,7 +266,7 @@ DLLEXPORT void MyGL_bindSamplers();
 
 typedef char (*MyGl_GetCharFunc)( void * );
 
-DLLEXPORT GLboolean MyGL_loadSourceLibrary( MyGl_GetCharFunc source_feed, void *source_param, const char *alias );
+DLLEXPORT GLboolean MyGL_loadShaderLibrary( MyGl_GetCharFunc source_feed, void *source_param, const char *alias );
 DLLEXPORT GLboolean MyGL_loadShader( MyGl_GetCharFunc source_feed, void *source_param, const char *alias );
 DLLEXPORT GLboolean MyGL_loadShaderStr( const char *source_str, void *source_param, const char *alias );
 
@@ -277,7 +276,7 @@ DLLEXPORT GLboolean MyGL_createTexture2D( const char *name,
                                           GLboolean filtered, GLboolean mipmapped, GLboolean repeat  );
 
 
-DLLEXPORT void MyGL_clear();
+DLLEXPORT void MyGL_clear( GLboolean color, GLboolean depth, GLboolean stencil );
 DLLEXPORT void MyGL_drawVbo( const char *name, MyGL_Primitive primitive, GLint start_index, GLsizei index_count );
 DLLEXPORT MyGL_VboStream MyGL_vboStream( const char *name );
 DLLEXPORT void MyGL_vboPush( const char *name );

@@ -74,11 +74,6 @@ struct Cull : MyGL_Cull {
 };
 
 
-//MyGL_Cull& operator = ( MyGL_Cull& lhs, const Cull& rhs ){
-//  lhs =   *(static_cast<const MyGL_Cull*>(&rhs));
-//  return lhs;
-//}
-
 struct CullState : public utils::StatefulState<Cull> {
 
   void forceCb() override {
@@ -140,11 +135,6 @@ struct Depth : MyGL_Depth {
     return on != rhs.on || depthWrite != rhs.depthWrite || depthMode != rhs.depthMode;
   }
 };
-
-//MyGL_Depth& operator = ( MyGL_Depth& lhs, const Depth& rhs ){
-//  lhs = static_cast<MyGL_Depth>(rhs);
-//  return lhs;
-//}
 
 struct DepthState : public utils::StatefulState<Depth> {
 
@@ -219,10 +209,6 @@ struct Blend : MyGL_Blend {
 
 };
 
-//MyGL_Blend& operator = ( MyGL_Blend& lhs, const Blend& rhs ){
-//  lhs = static_cast<MyGL_Blend>(rhs);
-//  return lhs;
-//}
 
 struct BlendState : public utils::StatefulState<Blend> {
 
@@ -455,11 +441,6 @@ struct ColorMask : MyGL_ColorMask {
   }
 
 };
-
-//MyGL_ColorMask& operator = ( MyGL_ColorMask& lhs, const ColorMask& rhs ){
-//  lhs = static_cast<MyGL_ColorMask>(rhs);
-//  return lhs;
-//}
 
 struct ColorMaskState : public utils::StatefulState<ColorMask> {
 

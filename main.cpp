@@ -274,7 +274,7 @@ void MyGL_bindSamplers(){
   }
 }
 
-GLboolean MyGL_loadSourceLibrary( MyGl_GetCharFunc source_feed, void *source_param, const char *alias ){
+GLboolean MyGL_loadShaderLibrary( MyGl_GetCharFunc source_feed, void *source_param, const char *alias ){
   if( !alias ){
     utils::logout( "error: shader library has no alias" );
     return GL_FALSE;
@@ -330,9 +330,22 @@ GLboolean MyGL_createTexture2D( const char *name,
   return GL_TRUE;
 }
 
-void MyGL_clear(){
-  //GLuint flags = 0;
-  //if( myGL.)
+void MyGL_clear( GLboolean color, GLboolean depth, GLboolean stencil ){
+  GLuint flags = 0;
+  if( color ){
+    glClearColor( myGL.clearColor.x,  myGL.clearColor.y,  myGL.clearColor.z,  myGL.clearColor.w );
+    flags |= GL_COLOR_BUFFER_BIT;
+  }
+  if( depth ){
+    glClearDepth( myGL.clearDepth );
+    flags |= GL_DEPTH_BUFFER_BIT;
+  }
+  if( stencil ){
+    glClearStencil( myGL.clearStencil );
+    flags |= GL_STENCIL_BUFFER_BIT;
+  }
+  if( flags )
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 }
 
 

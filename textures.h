@@ -54,6 +54,10 @@ namespace mygl
     mipmapped(mipmapped_),
     repeat(repeat_){
 
+    static float aniso = -1.0f;
+    if( aniso < 0.0f )
+      glGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &aniso );
+
     glActiveTexture( MYGL_TEXTURE_USAGE_UNIT );
     glGenTextures  ( 1, &tex );
     glBindTexture  ( target, tex );
@@ -65,6 +69,7 @@ namespace mygl
 
     if( filtered ){
       glTexParameteri( target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+      glTexParameterf( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso );
       if( mipmapped )
         glTexParameteri( target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
       else
