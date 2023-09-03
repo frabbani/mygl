@@ -176,3 +176,5 @@ Stencil Always WriteMask.AllBits Test.1 TestMask.AllBits StencilFail.Keep Stenci
 **/
 ```
 
+Example Screenshot: Wooden Crate in a Bath House
+![image](https://github.com/frabbani/mygl/assets/7139511/f59a02ea-6cdd-4490-969f-fa702df3c70e)
