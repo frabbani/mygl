@@ -703,11 +703,11 @@ namespace shaders
           Depth& depth = statefulDepth.value().current();
           depth.on = off ? GL_FALSE : GL_TRUE;
 
-          int writeOnly = tokenizer.contains( "WriteOnly" );
-          depth.depthWrite = writeOnly != -1 ? GL_FALSE : GL_TRUE;
+          int readOnly = tokenizer.contains( "ReadOnly" );
+          depth.depthWrite = readOnly < 0 ? GL_TRUE : GL_FALSE;
 
           for( int i = 1; i < tokenizer.count; i++ ){
-            if( strutils::equals( tokenizer[i].data(), "WriteOnly" ) )
+            if( strutils::equals( tokenizer[i].data(), "ReadOnly" ) )
               continue;
             if( strutils::equals( tokenizer[i].data(), "Off" ) )
               continue;
