@@ -35,13 +35,11 @@ void camera_face( camera_t *cam, float yaw, float pitch ){
   if( cam->yaw < 0.0f )
     cam->yaw += 360.0f;
 
-  float co, sn;
-  co = cosf( cam->yaw * PI / 180.0f - PI / 2.0f );
-  sn = sinf( cam->yaw * PI / 180.0f - PI / 2.0f );
-  cam->r = MyGL_vec3Rotate( MyGL_vec3R(), MyGL_vec3U(), co, sn );
-  cam->l = MyGL_vec3Rotate( MyGL_vec3L(), MyGL_vec3U(), co, sn );
-  co = cosf( cam->pitch * PI / 180.0f );
-  sn = sinf( cam->pitch * PI / 180.0f );
-  cam->l = MyGL_vec3Rotate( cam->l, cam->r, co, sn );
-  cam->u = MyGL_vec3Rotate( MyGL_vec3U(), cam->r, co, sn );
+  float rads;
+  rads = cam->yaw * PI / 180.0f - PI / 2.0f;
+  cam->r = MyGL_vec3Rotate( MyGL_vec3R(), MyGL_vec3U(), rads );
+  cam->l = MyGL_vec3Rotate( MyGL_vec3L(), MyGL_vec3U(), rads );
+  rads = cam->pitch * PI / 180.0f;
+  cam->l = MyGL_vec3Rotate( cam->l, cam->r, rads );
+  cam->u = MyGL_vec3Rotate( MyGL_vec3U(), cam->r, rads );
 }

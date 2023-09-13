@@ -1,7 +1,17 @@
+#include <stdint.h>
+
 #include "vec.h"
 #include "math.h"
 
 // Math below uses right-handed coordinates, where right is +x, look is +y, and up is +z
+
+
+static inline MyGL_Vec2 MyGL_vec2( float x, float y ){
+  MyGL_Vec2 v2;
+  v2.x = x;
+  v2.y = y;
+  return v2;
+}
 
 static inline MyGL_Vec3 MyGL_vec3Zero(){
   MyGL_Vec3 v3;
@@ -108,6 +118,7 @@ static inline MyGL_Vec4 MyGL_vec4( float x, float y, float z, float w ){
   v.w = w;
   return v;
 }
+
 
 static inline MyGL_Vec4 MyGL_vec4Scale( MyGL_Vec4 v, float s ){
   v.x *= s;

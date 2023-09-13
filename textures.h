@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <string>
 #include <memory>
 #include <algorithm>
@@ -178,11 +179,11 @@ struct Texture2D : public Texture<2> {
     sizes[1] = image.h;
     if( !mipmapped ){
       numMips = 1;
-      utils::logout( "creating non-mipmapped texture" );
+      utils::logout( "creating texture" );
       glTexImage2D( GL_TEXTURE_2D, 0, format.sizedFormat, image.w, image.h, 0, GL_BGRA, GL_UNSIGNED_BYTE, image.pixels );
     }
     else{
-      utils::logout( "creating mipmapped texture" );
+      utils::logout( "creating mip-mapped texture" );
       MyGL_MipChain chain = MyGL_mipChainCreate( image );
       for( size_t i = 0; i < chain.count; i++ ){
         glTexImage2D( GL_TEXTURE_2D, numMips++, format.sizedFormat,
@@ -243,8 +244,81 @@ GLuint mygl_texture_2d_array_init( uint32 unit, int32 filtered, int32 mipmapped,
   return tex;
 }
 */
+struct Texture2DArray : public Texture<3> {
+  size_t numMips = 0;
+
+  Texture2DArray( const char *name_, MyGL_ROImage atlas, uint32_t rows, uint32_t cols, const char *format_, bool filtered_, bool mipmapped_, bool repeat_ ) :
+    Texture( name_, GL_TEXTURE_2D_ARRAY, format_, filtered_, mipmapped_, repeat_ ){
+    sizes[0] = atlas.w / cols;
+    sizes[1] = atlas.h / rows;
+    sizes[2] = rows * cols;
+
+    MyGL_Image cell = MyGL_imageAlloc( sizes[0], sizes[1] );
+    MyGL_MipChain mips;
+
+    auto getCell = [&]( uint32_t r, uint32_t c ){
+      uint32_t yoff = r * cell.h;
+      uint32_t xoff = c * cell.w;
+      for( uint32_t y = 0; y < cell.h; y++ ){
+        for( uint32_t x = 0; x < cell.w; x++ ){
+          cell.pixels[ y * cell.w + x ] = atlas.pixels[ ( yoff + y ) * atlas.w + ( xoff + x ) ];
+        }
+      }
+    };
+
+
+    if( !mipmapped ){
+      numMips = 1;
+      utils::logout( "creating texture array" );
+      glTexImage3D( GL_TEXTURE_2D_ARRAY, 0, format.sizedFormat, sizes[0], sizes[1], sizes[2], 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr );
+      uint32_t layer = 0;
+      for( uint32_t r = 0; r < rows; r++ ){
+        for( uint32_t c = 0; c < cols; c++ ){
+          getCell( r, c );
+          glTexSubImage3D( GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer++, cell.w, cell.h, 1, GL_BGRA, GL_UNSIGNED_BYTE, cell.pixels  );
+        }
+      }
+    }
+    else{
+      auto getMipMaps = [&]( bool freeMem = true ){
+        if( freeMem )
+          MyGL_mipChainFree( &mips );
+        mips = MyGL_mipChainCreate( MyGL_roImage(cell) );
+      };
+
+      utils::logout( "creating mip-mapped texture array" );
+      getCell( 0, 0 );
+      getMipMaps( false );
+      numMips = mips.count;
+      for( size_t i = 0; i < mips.count; i++ )
+        glTexImage3D( GL_TEXTURE_2D_ARRAY, i, format.sizedFormat, mips.levels[i].w, mips.levels[i].h, sizes[2], 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr );
+
+      uint32_t layer = 0;
+      for( uint32_t r = 0; r < rows; r++ ){
+        for( uint32_t c = 0; c < cols; c++ ){
+          getCell( r, c );
+          getMipMaps();
+          for( size_t i = 0; i < mips.count; i++ )
+            glTexSubImage3D( GL_TEXTURE_2D_ARRAY, i, 0, 0, layer, mips.levels[i].w, mips.levels[i].h, 1, GL_BGRA, GL_UNSIGNED_BYTE, mips.levels[i].pixels  );
+          layer++;
+        }
+      }
+      MyGL_mipChainFree( &mips );
+    }
+
+    MyGL_imageFree( &cell );
+  }
+
+  size_t numMipLevels() override { return numMips; }
+  void apply( GLuint unit ) override {
+    glActiveTexture( GL_TEXTURE0 + unit );
+    glBindTexture  ( target, tex );
+  }
+
+};
 
 std::map< std::string, std::shared_ptr<Texture<1>>> named1DTextures;
 std::map< std::string, std::shared_ptr<Texture<2>>> named2DTextures;
+std::map< std::string, std::shared_ptr<Texture<3>>> named3DTextures;
 
 }

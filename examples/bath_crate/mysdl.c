@@ -1,7 +1,15 @@
 #include "mysdl.h"
 #include "timer.h"
 
-#include "libs.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <string.h>
+#include <stdint.h>
+#include <limits.h>
+#include <ctype.h>
+#include <math.h>
+
 #define NO_SDL_GLEXT
 #include <GL\glew.h>
 #include <SDL\SDL.h>

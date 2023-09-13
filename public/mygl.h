@@ -1,11 +1,11 @@
 #pragma once
 
-
 #include <GL/glew.h>
 
 #include "strn.h"
 #include "vec.h"
 #include "image.h"
+#include "text.h"
 
 
 typedef void (*MyGL_LogFunc)(const char*);
@@ -274,6 +274,10 @@ DLLEXPORT GLboolean MyGL_loadShaderStr( const char *source_str, void *source_par
 DLLEXPORT GLboolean MyGL_createTexture2D( const char *name,
                                           MyGL_ROImage image, const char *format,
                                           GLboolean filtered, GLboolean mipmapped, GLboolean repeat  );
+
+DLLEXPORT GLboolean MyGL_createTexture2DArray( const char *name,
+                                               MyGL_ROImage image_atlas, uint32_t num_rows, uint32_t num_cols, const char *format,
+                                               GLboolean filtered, GLboolean mipmapped, GLboolean repeat  );
 
 
 DLLEXPORT void MyGL_clear( GLboolean color, GLboolean depth, GLboolean stencil );

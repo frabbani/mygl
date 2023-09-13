@@ -36,6 +36,5 @@ typedef struct WAVE_obj_s{
 
 
 extern void WaveFront_obj_term( WaveFront_obj_t *obj );
-
-int WaveFront_obj_load( WaveFront_obj_t *obj, const char objfile[], float scale, int term );
+extern int  WaveFront_obj_load( WaveFront_obj_t *obj, const char objfile[], float scale, int term );
 

@@ -1,6 +1,8 @@
 #pragma once
 
-#include "libs.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 typedef enum {
   FS_UNOPENED = 0,

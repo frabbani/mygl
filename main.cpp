@@ -1,31 +1,21 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <cstring>
-#include <string>
-#include <memory>
-#include <vector>
-#include <utility>
+#include "public/vecdefs.h"
 
-#include <GL/glew.h>
-#include <GL/gl.h>
-
-#include "public/mygl.h"
+#include "utils/log.h"
+#include "utils/str.h"
 #include "utils/stateful.h"
 
-#include "utils.h"
 #include "colors.h"
 #include "streams.h"
 #include "bufferobjs.h"
+#include "common.h.o"
+#include "common.h.o"
 #include "textures.h"
 #include "mygl.h"
-#include "public/vecdefs.h"
 #include "shaders.h"
-
 
 using namespace mygl;
 
 MyGL myGL;
-
 
 std::shared_ptr< utils::Stateful<Cull>      > statefulCull      = nullptr;
 std::shared_ptr< utils::Stateful<Depth>     > statefulDepth     = nullptr;
@@ -42,7 +32,10 @@ MyGL *MyGL_initialize( MyGL_LogFunc logger, int initialize_glew, uint32_t stream
     else
       utils::logout( "GLEW initialized" );
   }
-
+  glEnable ( GL_TEXTURE_2D );
+  glEnable ( GL_TEXTURE_CUBE_MAP_SEAMLESS );
+  glHint   ( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );
+  glDisable( GL_LIGHTING );
 
   statefulCull  = std::make_shared<utils::Stateful<Cull>> ( CullState::makeUnique()  );
   statefulDepth = std::make_shared<utils::Stateful<Depth>>( DepthState::makeUnique() );
@@ -265,11 +258,22 @@ void MyGL_resetColorMask(){
 void MyGL_bindSamplers(){
   for( size_t i = 0; i < MYGL_MAX_SAMPLERS; i++ ){
     if( myGL.samplers[i].chars[0] != '\0' ){
-      auto f = named2DTextures.find( myGL.samplers[i].chars );
-      if( f != named2DTextures.end() ){
-        f->second->apply(i);
-        //utils::logout( "%s - binding '%s' to %d", __FUNCTION__, f->first.c_str(), (int)i );
+      {
+        auto f = named2DTextures.find( myGL.samplers[i].chars );
+        if( f != named2DTextures.end() ){
+          f->second->apply(i);
+          //utils::logout( "%s - binding '%s' to %d", __FUNCTION__, f->first.c_str(), (int)i );
+        }
       }
+
+      {
+        auto f = named3DTextures.find( myGL.samplers[i].chars );
+        if( f != named3DTextures.end() ){
+          f->second->apply(i);
+          //utils::logout( "%s - binding '%s' to %d", __FUNCTION__, f->first.c_str(), (int)i );
+        }
+      }
+
     }
   }
 }
@@ -319,7 +323,7 @@ GLboolean MyGL_createTexture2D( const char *name,
   }
 
   if( !image.w || !image.h || !image.pixels ){
-    utils::logout( "error: texture '%s' is invalid", name );
+    utils::logout( "error: texture image '%s' is invalid", name );
     return GL_FALSE;
   }
 
@@ -327,6 +331,39 @@ GLboolean MyGL_createTexture2D( const char *name,
   named2DTextures[ name ] = tex;
   utils::logout( "2D texture '%s' created:", name );
   tex->logInfo();
+  return GL_TRUE;
+}
+
+
+GLboolean MyGL_createTexture2DArray( const char *name,
+                                               MyGL_ROImage image_atlas, uint32_t num_rows, uint32_t num_cols, const char *format,
+                                               GLboolean filtered, GLboolean mipmapped, GLboolean repeat  ){
+  if( !name ){
+    utils::logout( "error: texture has no alias" );
+    return GL_FALSE;
+  }
+
+  if( !image_atlas.w || !image_atlas.h || !image_atlas.pixels ){
+    utils::logout( "error: texture '%s' image is invalid", name );
+    return GL_FALSE;
+  }
+
+  if( !num_rows || !num_cols ){
+    utils::logout( "error: invalid texture '%s' array dimensions", name );
+    return GL_FALSE;
+  }
+
+  if( !( image_atlas.w / num_cols ) || ( 0 != (image_atlas.w % num_cols) ) ||
+      !( image_atlas.h / num_rows ) || ( 0 != (image_atlas.h % num_rows) ) ){
+    utils::logout( "error: texture '%s' array/texture image mismatch", name );
+    return GL_FALSE;
+  }
+
+  auto tex = std::make_shared<Texture2DArray>( name, image_atlas, num_rows, num_cols, format, filtered, mipmapped, repeat );
+  named3DTextures[ name ] = tex;
+  utils::logout( "2D texture Array '%s' created:", name );
+  tex->logInfo();
+
   return GL_TRUE;
 }
 

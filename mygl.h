@@ -6,6 +6,7 @@
 
 namespace mygl
 {
+
   namespace trace{
     struct Output{
       char *output = nullptr;

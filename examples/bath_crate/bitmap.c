@@ -1,6 +1,8 @@
 #include "bitmap.h"
 
-#include "libs.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 void BMP_write( const  MyGL_Color *pixels, uint32_t w, uint32_t h, const char name[] ){
   char file[128];
@@ -19,7 +21,7 @@ void BMP_write( const  MyGL_Color *pixels, uint32_t w, uint32_t h, const char na
   BMP_file_magic_t magic;
   magic.num0 = 'B';
   magic.num1 = 'M';
-  fwrite( &magic, 2, 1, fp ); //hard coding 2 bytes, (our structure isn't packed).
+  fwrite( &magic, 2, 1, fp );
 
   BMP_file_header_t fileheader;
   fileheader.filesize = w * h * sizeof(int) + 54;
