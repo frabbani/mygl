@@ -3,7 +3,8 @@
 #include "vec.h"
 #include "math.h"
 
-// Math below uses right-handed coordinates, where right is +x, look is +y, and up is +z
+
+/** Math below uses right-handed coordinates, where right is +x, look is +y, and up is +z **/
 
 
 static inline MyGL_Vec2 MyGL_vec2( float x, float y ){
@@ -13,32 +14,11 @@ static inline MyGL_Vec2 MyGL_vec2( float x, float y ){
   return v2;
 }
 
-static inline MyGL_Vec3 MyGL_vec3Zero(){
-  MyGL_Vec3 v3;
-  v3.x = v3.y = v3.z = 0.0f;
-  return v3;
-}
+static const MyGL_Vec3 MyGL_vec3Zero = {{{ 0.0f, 0.0f, 0.0f }}};
+static const MyGL_Vec3 MyGL_vec3R    = {{{ 1.0f, 0.0f, 0.0f }}};
+static const MyGL_Vec3 MyGL_vec3L    = {{{ 0.0f, 1.0f, 0.0f }}};
+static const MyGL_Vec3 MyGL_vec3U    = {{{ 0.0f, 0.0f, 1.0f }}};
 
-static inline MyGL_Vec3 MyGL_vec3R(){
-  MyGL_Vec3 v3;
-  v3.x = 1.0f;
-  v3.y = v3.z = 0.0f;
-  return v3;
-}
-
-static inline MyGL_Vec3 MyGL_vec3L(){
-  MyGL_Vec3 v3;
-  v3.y = 1.0f;
-  v3.x = v3.z = 0.0f;
-  return v3;
-}
-
-static inline MyGL_Vec3 MyGL_vec3U(){
-  MyGL_Vec3 v3;
-  v3.z = 1.0f;
-  v3.x = v3.y = 0.0f;
-  return v3;
-}
 
 static inline MyGL_Vec3 MyGL_vec3( float x, float y, float z ){
   MyGL_Vec3 v3;
@@ -129,13 +109,13 @@ static inline MyGL_Vec4 MyGL_vec4Scale( MyGL_Vec4 v, float s ){
 }
 
 
-static inline MyGL_Mat4 MyGL_mat4Identity(){
-  MyGL_Mat4 mat4;
-  for( size_t i = 0; i < 4; i++ )
-    for( size_t j = 0; j < 4; j++ )
-      mat4.f4x4[i][j] = i == j ? 1.0f : 0.0f;
-  return mat4;
-}
+static const MyGL_Mat4 MyGL_mat4Identity = {{{
+    1.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 1.0f,
+}}};
+
 
 static inline MyGL_Mat4 MyGL_mat4Multiply( MyGL_Mat4 lhs, MyGL_Mat4 rhs ){
   MyGL_Mat4 mat4;
@@ -279,3 +259,21 @@ static MyGL_Mat4 MyGL_mat4View( MyGL_Vec3 p, MyGL_Vec3 r, MyGL_Vec3 l, MyGL_Vec3
   mat4.f4x4[3][3] = 1.0f;
   return mat4;
 }
+
+static MyGL_Mat4 MyGL_mat4Yaw( MyGL_Vec3 p, float angleInRadians ){
+  MyGL_Mat4 mat4 = MyGL_mat4Identity;
+  float co = cosf( angleInRadians );
+  float sn = sinf( angleInRadians );
+
+  mat4.f4x4[0][0] = co;
+  mat4.f4x4[0][1] = -sn;
+  mat4.f4x4[1][0] = sn;
+  mat4.f4x4[1][1] = co;
+
+  mat4.f4x4[0][3] = p.x;
+  mat4.f4x4[1][3] = p.y;
+  mat4.f4x4[2][3] = p.z;
+  mat4.f4x4[3][3] = 1.0f;
+  return mat4;
+}
+

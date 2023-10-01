@@ -24,7 +24,7 @@ extern "C" {
 
 #define DLLEXPORT __declspec( dllexport )
 DLLEXPORT GLboolean MyGL_loadAsciiCharSet( const MyGL_AsciiCharSet *char_set, GLboolean filtered, GLboolean mipmapped  );
-DLLEXPORT uint32_t  MyGL_drawAsciiCharSet( const char *name, const char *text, MyGL_Color color, MyGL_Vec3 offset, MyGL_Vec2 scale, float spacing );
+DLLEXPORT uint32_t  MyGL_streamAsciiCharSet( const char *name, const char *text, MyGL_Color color, MyGL_Vec3 offset, MyGL_Vec2 scale, float spacing );
 
 #ifdef __cplusplus
 }

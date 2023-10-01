@@ -8,7 +8,13 @@
 #include <GL/glew.h>
 #include <mygl/public/mygl.h>
 #include <mygl/public/strn.h>
+
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-function"
 #include <mygl/public/vecdefs.h>
+#pragma GCC diagnostic pop
 
 
 #include "mysdl.h"
@@ -165,6 +171,7 @@ SDL_bool MySDL_init(){
 
   // https://www.dafont.com/funny-maid-corporation.font
   load_font( "funny_maid" );
+  load_font( "lemonmilk" );
 
   file_stream_t shader;
   file_stream_init( &shader, "assets/shaders/includes.glsl", 0 );
@@ -281,24 +288,18 @@ void MySDL_draw(){
 
   mygl->samplers[0] = MyGL_str64( "Floor Texture" );
   MyGL_bindSamplers();
-  mygl->W_matrix = MyGL_mat4World( MyGL_vec3Zero(), MyGL_vec3R(), MyGL_vec3L() , MyGL_vec3U() );
-
-
+  mygl->W_matrix = MyGL_mat4Identity;
   MyGL_drawVbo( "floor", MYGL_TRIANGLES, 0, floor_obj.num_faces * 3 );
-
 
   mygl->samplers[0] = MyGL_str64( "Crate Texture" );
   MyGL_bindSamplers();
 
-  mygl->W_matrix = MyGL_mat4World( MyGL_vec3( 0.0f, 0.0f, crate_z ),
-                                   MyGL_vec3Rotate( MyGL_vec3R(), MyGL_vec3U(), rads ),
-                                   MyGL_vec3Rotate( MyGL_vec3L(), MyGL_vec3U(), rads ),
-                                   MyGL_vec3U() );
+  mygl->W_matrix = MyGL_mat4Yaw( MyGL_vec3( 0.0f, 0.0f, crate_z ), rads );
   MyGL_drawVbo( "crate", MYGL_TRIANGLES, 0, crate_obj.num_faces * 3 );
 
   mygl->material = MyGL_str64( "Vertex Position, Color" );
   mygl->W_matrix = MyGL_mat4World( MyGL_vec3( 0.0f, 0.0f, water_z ),
-                                   MyGL_vec3R(), MyGL_vec3L(), MyGL_vec3U() );
+                                   MyGL_vec3R, MyGL_vec3L, MyGL_vec3U );
   MyGL_drawVbo( "water", MYGL_TRIANGLES, 0, 6 );
 
 
@@ -306,24 +307,35 @@ void MySDL_draw(){
   mygl->samplers[0] = MyGL_str64( "Crate Texture" );
   MyGL_bindSamplers();
   mygl->W_matrix = MyGL_mat4World( MyGL_vec3( 0.0f, 0.0f, water_z - crate_z ),
-                                   MyGL_vec3Rotate( MyGL_vec3R(), MyGL_vec3U(), rads ),
-                                   MyGL_vec3Rotate( MyGL_vec3L(), MyGL_vec3U(), rads ),
-                                   MyGL_vec3Scale ( MyGL_vec3U(), -1.0f ) );
+                                   MyGL_vec3Rotate( MyGL_vec3R, MyGL_vec3U, rads ),
+                                   MyGL_vec3Rotate( MyGL_vec3L, MyGL_vec3U, rads ),
+                                   MyGL_vec3Scale ( MyGL_vec3U, -1.0f ) );
   MyGL_drawVbo( "crate", MYGL_TRIANGLES, 0, crate_obj.num_faces * 3 );
 
 
   mygl->material = MyGL_str64( "Vertex Position, Color, and Texture (Simple)" );
   mygl->samplers[0] = MyGL_str64( "funny_maid" );
   MyGL_bindSamplers();
-  mygl->W_matrix = MyGL_mat4World( MyGL_vec3( -1.5f, 1.0f, 1.5f ), MyGL_vec3R(), MyGL_vec3L() , MyGL_vec3U() );
+  mygl->W_matrix = MyGL_mat4World( MyGL_vec3( -1.5f, 1.0f, 1.5f ), MyGL_vec3R, MyGL_vec3L , MyGL_vec3U );
   MyGL_Color col = mix_color( text_color.last_color, text_color.next_color, (float)text_color.ticks / (float)text_color.period );
-
-  size_t n = MyGL_drawAsciiCharSet( "funny_maid", "Spinning Crate in a Dank Bath House!", col,
-                                    MyGL_vec3Zero(), MyGL_vec2( 0.3f, 0.3f ), 0.01f );
-  MyGL_drawStreaming( "Position, Color, UV0" );
-  mygl->numPrimitives = n;
   mygl->primitive = MYGL_QUADS;
+  mygl->numPrimitives = MyGL_streamAsciiCharSet( "funny_maid", "Spinning Crate in a Dank Bath House!", col,
+                                                 MyGL_vec3Zero, MyGL_vec2( 0.3f, 0.3f ), 0.01f );
+  MyGL_drawStreaming( "Position, Color, UV0" );
 
+  mygl->samplers[0] = MyGL_str64( "lemonmilk" );
+  MyGL_bindSamplers();
+  mygl->W_matrix = MyGL_mat4World( MyGL_vec3( -1.5f, 1.0f, 1.5f ), MyGL_vec3R, MyGL_vec3L , MyGL_vec3U );
+
+  col.value = 0xffffffff;
+  mygl->primitive = MYGL_QUADS;
+  mygl->numPrimitives = MyGL_streamAsciiCharSet( "lemonmilk", "www.youtube.com/faisal_who", col,
+                                                 MyGL_vec3( 0.4f, 0.0f, -2.4f ), MyGL_vec2( 0.1f, 0.1f ), 0.01f );
+
+  mygl->W_matrix = MyGL_mat4Identity;
+  mygl->V_matrix = MyGL_mat4Identity;
+  mygl->P_matrix = MyGL_mat4Ortho( 5, 5, 0.01f, 1000.0f );
+  MyGL_drawStreaming( "Position, Color, UV0" );
 
   SDL_GL_SwapBuffers();
 }

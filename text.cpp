@@ -69,7 +69,7 @@ GLboolean MyGL_loadAsciiCharSet( const MyGL_AsciiCharSet *char_set, GLboolean fi
   return GL_TRUE;
 }
 
-uint32_t MyGL_drawAsciiCharSet( const char *name, const char *text, MyGL_Color color, MyGL_Vec3 offset, MyGL_Vec2 scale, float spacing ){
+uint32_t MyGL_streamAsciiCharSet( const char *name, const char *text, MyGL_Color color, MyGL_Vec3 offset, MyGL_Vec2 scale, float spacing ){
   auto it = mygl::textureCharSets.find( name );
   if( it == mygl::textureCharSets.end() )
     return 0;
