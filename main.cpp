@@ -1,4 +1,3 @@
-#include "public/vecdefs.h"
 
 #include "utils/log.h"
 #include "utils/str.h"
@@ -7,15 +6,21 @@
 #include "colors.h"
 #include "streams.h"
 #include "bufferobjs.h"
-#include "common.h.o"
-#include "common.h.o"
 #include "textures.h"
 #include "mygl.h"
 #include "shaders.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-function"
+#include "public/vecdefs.h"
+#pragma GCC diagnostic pop
+
+
 using namespace mygl;
 
 MyGL myGL;
+GLboolean chatty = false;
 
 std::shared_ptr< utils::Stateful<Cull>      > statefulCull      = nullptr;
 std::shared_ptr< utils::Stateful<Depth>     > statefulDepth     = nullptr;
@@ -62,9 +67,9 @@ MyGL *MyGL_initialize( MyGL_LogFunc logger, int initialize_glew, uint32_t stream
   utils::logout( " * blend is %s.", myGL.blend.on ? "enabled" : "disabled");
   utils::logout( " * stencil is %s.", myGL.stencil.on ? "enabled" : "disabled");
   utils::logout( " * color write for RGBA is { %s, %s, %s, %s }.",
-                 myGL.colorMask.red ? "on" : "off",
+                 myGL.colorMask.red   ? "on" : "off",
                  myGL.colorMask.green ? "on" : "off",
-                 myGL.colorMask.blue ? "on" : "off",
+                 myGL.colorMask.blue  ? "on" : "off",
                  myGL.colorMask.alpha ? "on" : "off" );
 
   positionStream = std::make_shared<VertexAttributeStream4fv>( "Position", stream_count );
@@ -94,11 +99,12 @@ MyGL *MyGL_initialize( MyGL_LogFunc logger, int initialize_glew, uint32_t stream
   myGL.primitive = MYGL_TRIANGLES;
   myGL.numPrimitives = 0;
 
-  shaders::globalUniformSetters.emplace( "_P", &myGL.P_matrix );
-  shaders::globalUniformSetters.emplace( "_V", &myGL.V_matrix );
-  shaders::globalUniformSetters.emplace( "_W", &myGL.W_matrix );
 
-  shaders::globalUniformSetters.emplace( "_PVW", [&]() -> MyGL_Mat4 {
+  shaders::globalUniformSetters.emplace( "mygl.matProj", &myGL.P_matrix );
+  shaders::globalUniformSetters.emplace( "mygl.matView", &myGL.V_matrix );
+  shaders::globalUniformSetters.emplace( "mygl.matWorld", &myGL.W_matrix );
+
+  shaders::globalUniformSetters.emplace( "mygl.matProjViewWorld", [&]() -> MyGL_Mat4 {
     MyGL_Mat4 m = std::move( MyGL_mat4Multiply( myGL.V_matrix, myGL.W_matrix ) );
     m = std::move( MyGL_mat4Multiply( myGL.P_matrix, std::move(m) ) );
     return m;
@@ -288,6 +294,16 @@ GLboolean MyGL_loadShaderLibrary( MyGl_GetCharFunc source_feed, void *source_par
   return GL_TRUE;
 }
 
+GLboolean MyGL_loadShaderLibraryStr( const char *source_str, const char *alias ){
+  if( !alias ){
+    utils::logout( "error: shader library has no alias" );
+    return GL_FALSE;
+  }
+  shaders::LineFeed feed( source_str );
+  shaders::SourceCode::sharedSource.try_emplace( alias, std::string(alias), feed );
+  return GL_TRUE;
+}
+
 GLboolean MyGL_loadShader( MyGl_GetCharFunc source_feed, void *source_param, const char *alias ){
   if( !alias ){
     utils::logout( "error: shader has no alias" );
@@ -301,7 +317,7 @@ GLboolean MyGL_loadShader( MyGl_GetCharFunc source_feed, void *source_param, con
   return GL_TRUE;
 }
 
-GLboolean MyGL_loadShaderStr( const char *source_str, void *source_param, const char *alias ){
+GLboolean MyGL_loadShaderStr( const char *source_str, const char *alias ){
   if( !alias ){
     utils::logout( "error: shader has no alias" );
     return GL_FALSE;
@@ -458,12 +474,20 @@ GLboolean MyGL_createVbo( const char *name, uint32_t size, const MyGL_VertexAttr
   return GL_TRUE;
 }
 
+GLboolean MyGL_Debug_getChatty(){
+  return chatty;
+}
+
+void MyGL_Debug_setChatty( GLboolean chatty_ ){
+  chatty = chatty_;
+}
+
 void MyGL_Trace_Stencil_set( char *output, uint32_t size ){
   if( !size || !output ){
     trace::stencilOut = std::nullopt;
     return;
   }
-  trace::stencilOut = trace::Output( output, size );
+  trace::stencilOut = trace::Output( output, "STENCIL", size );
 }
 
 void MyGL_Trace_Stencil_tag( const char *tag ){

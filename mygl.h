@@ -11,10 +11,10 @@ namespace mygl
     struct Output{
       char *output = nullptr;
       uint64_t len = 0;
-      Output( char *output_, uint64_t len_ ) : output(output_), len(len_) {
+      Output( char *output_, const char *title, uint64_t len_ ) : output(output_), len(len_) {
         if( output && len ){
           output[0] = '\0';
-          snprintf( output, len, "******* STENCIL TRACE *******\n");
+          snprintf( output, len, "******* %s TRACE *******\n", title );
         }
       }
       ~Output(){ output = nullptr; len = 0; }

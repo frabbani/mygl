@@ -25,6 +25,7 @@ Stencil Always WriteMask.AllBits Test.1 TestMask.AllBits StencilFail.Keep Stenci
 
 
 extern MyGL myGL;
+extern GLboolean chatty;
 
 namespace mygl
 {
@@ -763,7 +764,8 @@ namespace shaders
 
       std::string s = lines.formatted( "__vert__" );
       const char *p = s.c_str();
-      //utils::logout( "Source:\n%s", p );
+      if( chatty )
+        utils::logout( "Source:\n%s", p );
       glShaderSource( vert, 1, &p, NULL );
       // glGetShaderiv ( vert, GL_SHADER_SOURCE_LENGTH, &status );
       // utils::logout( "vertex shader source length: %d", status );

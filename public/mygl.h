@@ -236,7 +236,6 @@ typedef struct MyGL_s{
   MyGL_Mat4 P_matrix;
 
   MyGL_Str64 material;
-
 }MyGL;
 
 
@@ -267,8 +266,9 @@ DLLEXPORT void MyGL_bindSamplers();
 typedef char (*MyGl_GetCharFunc)( void * );
 
 DLLEXPORT GLboolean MyGL_loadShaderLibrary( MyGl_GetCharFunc source_feed, void *source_param, const char *alias );
+DLLEXPORT GLboolean MyGL_loadShaderLibraryStr( const char *source_str, const char *alias );
 DLLEXPORT GLboolean MyGL_loadShader( MyGl_GetCharFunc source_feed, void *source_param, const char *alias );
-DLLEXPORT GLboolean MyGL_loadShaderStr( const char *source_str, void *source_param, const char *alias );
+DLLEXPORT GLboolean MyGL_loadShaderStr( const char *source_str, const char *alias );
 
 
 DLLEXPORT GLboolean MyGL_createTexture2D( const char *name,
@@ -285,6 +285,9 @@ DLLEXPORT void MyGL_drawVbo( const char *name, MyGL_Primitive primitive, GLint s
 DLLEXPORT MyGL_VboStream MyGL_vboStream( const char *name );
 DLLEXPORT void MyGL_vboPush( const char *name );
 DLLEXPORT GLboolean MyGL_createVbo( const char *name, uint32_t size, const MyGL_VertexAttrib *attribs, uint32_t num_attribs );
+
+DLLEXPORT GLboolean MyGL_Debug_getChatty();
+DLLEXPORT void MyGL_Debug_setChatty( GLboolean chatty );
 
 DLLEXPORT void MyGL_Trace_Stencil_set( char *output, uint32_t size );
 DLLEXPORT void MyGL_Trace_Stencil_tag( const char *tag );

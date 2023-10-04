@@ -218,32 +218,8 @@ struct Texture2D : public Texture<2> {
   }
 
 };
-/*
-GLuint mygl_texture_2d_array_init( uint32 unit, int32 filtered, int32 mipmapped, int32 repeat ){
-  GLuint tex = 0;
-  glActiveTexture( GL_TEXTURE0 + unit );
-  glGenTextures  ( 1, &tex );
-  glBindTexture  ( GL_TEXTURE_2D_ARRAY, tex );
 
-  if( filtered ){
-    glTexParameteri( GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-    if( mipmapped )
-      glTexParameteri( GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-    else
-      glTexParameteri( GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-  }
-  else{
-    glTexParameteri( GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-    if( mipmapped )
-      glTexParameteri( GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST );
-    else
-      glTexParameteri( GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-  }
-  mygl_texture_2d_array_wrap( repeat );
 
-  return tex;
-}
-*/
 struct Texture2DArray : public Texture<3> {
   size_t numMips = 0;
 
