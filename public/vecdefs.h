@@ -1,5 +1,11 @@
 #pragma once
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
 #include <stdint.h>
 
 #include "vec.h"
@@ -279,3 +285,6 @@ static MyGL_Mat4 MyGL_mat4Yaw( MyGL_Vec3 p, float angleInRadians ){
   return mat4;
 }
 
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
