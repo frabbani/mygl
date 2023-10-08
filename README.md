@@ -29,7 +29,7 @@ Stencil Always WriteMask.AllBits Value.3 ValueMask.AllBits StencilFail.Keep Sten
 layout(location = 0) in vec4 vtx_p;
 
 void main(){
-  gl_Position = _PVW * vtx_p;
+  gl_Position = PVW * vtx_p;
 }
 
 #endif
@@ -67,7 +67,7 @@ layout(location = 2) in vec4 vtx_t0;
 
 
 void main(){
-  gl_Position = _PVW * vtx_p;
+  gl_Position = PVW * vtx_p;
   var_c = vtx_c;
   var_t = vtx_t0;
 }
@@ -111,7 +111,7 @@ layout(location = 2) in vec4 vtx_t0;
 
 
 void main(){
-  gl_Position = _PVW * vtx_p;
+  gl_Position = PVW * vtx_p;
   var_c = vtx_c;
   var_t = vtx_t0;
 }
