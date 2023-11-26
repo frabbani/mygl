@@ -2,6 +2,7 @@
 
 #include "public/mygl.h"
 
+#include "utils/log.h"
 #include "utils/stateful.h"
 
 namespace mygl
@@ -36,42 +37,19 @@ namespace mygl
        strncat( output, str, len-1 );
      }
     };
-    std::optional<Output> stencilOut = std::nullopt;
+
+    extern std::optional<Output> stencilOut;
   }
 
 
 
 struct Cull : MyGL_Cull {
-  Cull(){
-    on = GL_FALSE;
-    cullMode = MYGL_BACK;
-    frontIsCCW = GL_TRUE;
-  }
-
-  Cull& operator = ( const MyGL_Cull& rhs ){
-    *(static_cast<MyGL_Cull *>(this)) = rhs;
-    return *this;
-  }
-
-  void applyOn(){
-    if( on )
-      glEnable ( GL_CULL_FACE );
-    else
-      glDisable( GL_CULL_FACE );
-  }
-
-  void applyCullMode(){ glCullFace( cullMode ); }
-
-  void applyFrontFaceIsCCW(){
-    if( frontIsCCW )
-      glFrontFace( GL_CCW );
-    else
-      glFrontFace( GL_CW  );
-  }
-
-  bool operator != (const Cull& rhs ) const {
-    return on != rhs.on || cullMode != rhs.cullMode || frontIsCCW != rhs.frontIsCCW;
-  }
+  Cull();
+  Cull& operator = ( const MyGL_Cull& rhs );
+  void applyOn();
+  void applyCullMode();
+  void applyFrontFaceIsCCW();
+  bool operator != (const Cull& rhs ) const;
 };
 
 
@@ -238,27 +216,9 @@ struct BlendState : public utils::StatefulState<Blend> {
 };
 
 
-bool operator != (const MyGL_StencilTest& lhs, const MyGL_StencilTest& rhs ){
-  return lhs.mask != rhs.mask || lhs.mode != rhs.mode || lhs.ref != rhs.ref;
-}
-
-bool operator != (const MyGL_StencilOp& lhs, const MyGL_StencilOp& rhs ){
-  return
-      lhs.stencilFail != rhs.stencilFail ||
-      lhs.stencilPassDepthFail != rhs.stencilPassDepthFail ||
-      lhs.stencilPassDepthPass != rhs.stencilPassDepthPass;
-}
-
-bool operator != (const MyGL_Stencil& lhs, const MyGL_Stencil& rhs ){
-  return
-      lhs.on != rhs.on ||
-      // lhs.separate != rhs.separate ||
-      lhs.writeMask != rhs.writeMask ||
-      lhs.stencilTest != rhs.stencilTest ||
-      lhs.stencilOp != rhs.stencilOp; // ||
-      // lhs.stencilBackTest != rhs.stencilBackTest ||
-      // lhs.stencilBackOp != rhs.stencilBackOp;
-}
+extern bool operator != (const MyGL_StencilTest& lhs, const MyGL_StencilTest& rhs );
+extern bool operator != (const MyGL_StencilOp& lhs, const MyGL_StencilOp& rhs );
+extern bool operator != (const MyGL_Stencil& lhs, const MyGL_Stencil& rhs );
 
 struct Stencil : public MyGL_Stencil {
   static int newID(){
@@ -459,45 +419,97 @@ struct ColorMaskState : public utils::StatefulState<ColorMask> {
   }
 };
 
+
+
 struct UniformSetter{
   using Value =
-      std::variant< const float*, const MyGL_Vec2*, const MyGL_Vec3*, const MyGL_Vec4*, const MyGL_Mat4*, std::function<MyGL_Mat4()> >;
+      std::variant<
+      const int32_t*, const MyGL_IVec2*, const MyGL_IVec3*, const MyGL_IVec4*,
+      const uint32_t*, const MyGL_UVec2*, const MyGL_UVec3*, const MyGL_UVec4*,
+      const float*, const MyGL_Vec2*, const MyGL_Vec3*, const MyGL_Vec4*,
+      const MyGL_Mat2*, const MyGL_Mat3*, const MyGL_Mat4*,
+      std::function<MyGL_Mat4()> >;
 
-  void set_( const float *v,     GLint loc ){
-    glUniform1f( loc, *v );
-  }
-  void set_( const MyGL_Vec2 *v, GLint loc ){
-    glUniform2fv( loc, 1, v->f2 );
-  }
-  void set_( const MyGL_Vec3* v, GLint loc ){
-    glUniform3fv( loc, 1, v->f3 );
-  }
-  void set_( const MyGL_Vec4* v, GLint loc ){
-    glUniform4fv( loc, 1, v->f4 );
-  }
-  void set_( const MyGL_Mat4* v, GLint loc ){
-    glUniformMatrix4fv( loc, 1, GL_TRUE, v->f16 );
-  }
-  void set_( std::function<MyGL_Mat4()> v, GLint loc ){
-    glUniformMatrix4fv( loc, 1, GL_TRUE, v().f16 );
-  }
+  void set( GLint loc, const int32_t    *v );
+  void set( GLint loc, const MyGL_IVec2 *v );
+  void set( GLint loc, const MyGL_IVec3* v );
+  void set( GLint loc, const MyGL_IVec4* v );
+
+  void set( GLint loc, const uint32_t   *v );
+  void set( GLint loc, const MyGL_UVec2 *v );
+  void set( GLint loc, const MyGL_UVec3* v );
+  void set( GLint loc, const MyGL_UVec4* v );
+
+  void set( GLint loc, const float     *v );
+  void set( GLint loc, const MyGL_Vec2 *v );
+  void set( GLint loc, const MyGL_Vec3* v );
+  void set( GLint loc, const MyGL_Vec4* v );
+
+  void set( GLint loc, const MyGL_Mat2* v );
+  void set( GLint loc, const MyGL_Mat3* v );
+  void set( GLint loc, const MyGL_Mat4* v );
+
+  void set( GLint loc, std::function<MyGL_Mat4()> v );
 
   Value value;
 
-  UniformSetter( const float *value_ ) : value(value_) {}
-  UniformSetter( const MyGL_Vec2 *value_ ) : value( value_) {}
-  UniformSetter( const MyGL_Vec3 *value_ ) : value( value_) {}
-  UniformSetter( const MyGL_Vec4 *value_ ) : value( value_) {}
-  UniformSetter( const MyGL_Mat4 *value_ ) : value( value_) {}
-  UniformSetter( std::function<MyGL_Mat4()> value_ ) : value( value_) {}
+  UniformSetter( const int32_t *value_ ) :    value( value_ ) {}
+  UniformSetter( const MyGL_IVec2 *value_ ) : value( value_ ) {}
+  UniformSetter( const MyGL_IVec3 *value_ ) : value( value_ ) {}
+  UniformSetter( const MyGL_IVec4 *value_ ) : value( value_ ) {}
+  UniformSetter( const uint32_t *value_ ) :   value( value_ ) {}
+  UniformSetter( const MyGL_UVec2 *value_ ) : value( value_ ) {}
+  UniformSetter( const MyGL_UVec3 *value_ ) : value( value_ ) {}
+  UniformSetter( const MyGL_UVec4 *value_ ) : value( value_ ) {}
+  UniformSetter( const float *value_ ) :      value( value_ ) {}
+  UniformSetter( const MyGL_Vec2 *value_ ) :  value( value_ ) {}
+  UniformSetter( const MyGL_Vec3 *value_ ) :  value( value_ ) {}
+  UniformSetter( const MyGL_Vec4 *value_ ) :  value( value_ ) {}
+  UniformSetter( const MyGL_Mat2 *value_ ) :  value( value_ ) {}
+  UniformSetter( const MyGL_Mat3 *value_ ) :  value( value_ ) {}
+  UniformSetter( const MyGL_Mat4 *value_ ) :  value( value_ ) {}
+  UniformSetter( std::function<MyGL_Mat4()> value_ ) : value( value_ ) {}
 
-  void set( GLint loc ){
-    auto visitor = [&]( auto&& p ){
-      set_( p, loc );
-    };
-    std::visit( visitor, value );
+  void set( GLint loc );
+
+};
+
+struct Uniform {
+  std::string        name;
+  MyGL_UniformType   type = MYGL_UNIFORM_FLOAT;
+  GLint              loc = -1;
+  MyGL_UniformValue  value;
+
+  Uniform(){}
+  Uniform( const Uniform& u ) : name(u.name), type(u.type), loc(u.loc), value(u.value){}
+
+  void apply( GLint loc, UniformSetter& setter ){
+    switch( type ){
+      case MYGL_UNIFORM_FLOAT : setter.set( loc, &value.floa ); break;
+      case MYGL_UNIFORM_FLOAT_VEC2 : setter.set( loc, &value.vec2 ); break;
+      case MYGL_UNIFORM_FLOAT_VEC3 : setter.set( loc, &value.vec3 ); break;
+      case MYGL_UNIFORM_FLOAT_VEC4 : setter.set( loc, &value.vec4 ); break;
+      case MYGL_UNIFORM_FLOAT_MAT2 : setter.set( loc, &value.mat2 ); break;
+      case MYGL_UNIFORM_FLOAT_MAT3 : setter.set( loc, &value.mat3 ); break;
+      case MYGL_UNIFORM_FLOAT_MAT4 : setter.set( loc, &value.mat4 ); break;
+      case MYGL_UNIFORM_INT : setter.set( loc, &value.int32 ); break;
+      case MYGL_UNIFORM_INT_VEC2 : setter.set( loc, &value.ivec2 ); break;
+      case MYGL_UNIFORM_INT_VEC3 : setter.set( loc, &value.ivec3 ); break;
+      case MYGL_UNIFORM_INT_VEC4 : setter.set( loc, &value.ivec4 ); break;
+      case MYGL_UNIFORM_UINT : setter.set( loc, &value.uint32 ); break;
+      case MYGL_UNIFORM_UINT_VEC2 : setter.set( loc, &value.uvec2 ); break;
+      case MYGL_UNIFORM_UINT_VEC3 : setter.set( loc, &value.uvec3 ); break;
+      case MYGL_UNIFORM_UINT_VEC4 : setter.set( loc, &value.uvec4 ); break;
+    }
   }
 
+  MyGL_Uniform forEdit(){
+    MyGL_Uniform r;
+    r.info.name = MyGL_str64( name.c_str() );
+    r.info.type = type;
+    r.value     = &value;
+    return r;
+  }
 };
 
 }

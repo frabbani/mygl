@@ -47,7 +47,8 @@ extern "C" {
 
 #define DLLEXPORT __declspec( dllexport )
 
-DLLEXPORT MyGL_ROImage MyGL_roImage( MyGL_Image );
+#define MYGL_ROIMAGE(i) (MyGL_ROImage){ .w=(i).w, .h=(i).h, .pixels=(i).pixels }
+
 DLLEXPORT void MyGL_imageFree( MyGL_Image *image );
 DLLEXPORT MyGL_Image MyGL_imageAlloc( uint32_t w, uint32_t h );
 DLLEXPORT MyGL_Image MyGL_imageDup( MyGL_ROImage image );

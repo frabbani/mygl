@@ -45,6 +45,7 @@ MyGL_Str##len MyGL_str##len##Fmt( const char* format, ... ){  \
   return s; \
 } \
 
+
 MYGLSTRNDEF(24)
 MYGLSTRNDEF(40)
 MYGLSTRNDEF(64)

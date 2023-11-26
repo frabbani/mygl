@@ -99,7 +99,6 @@ MyGL *MyGL_initialize( MyGL_LogFunc logger, int initialize_glew, uint32_t stream
   myGL.primitive = MYGL_TRIANGLES;
   myGL.numPrimitives = 0;
 
-
   shaders::globalUniformSetters.emplace( "mygl.matProj", &myGL.P_matrix );
   shaders::globalUniformSetters.emplace( "mygl.matView", &myGL.V_matrix );
   shaders::globalUniformSetters.emplace( "mygl.matWorld", &myGL.W_matrix );
@@ -112,7 +111,7 @@ MyGL *MyGL_initialize( MyGL_LogFunc logger, int initialize_glew, uint32_t stream
 
 
   for( auto& [ k, v ] : shaders::globalUniformSetters ){
-    utils::logout( "* global uniform: '%s'", k.c_str() );
+    utils::logout( " * global uniform: '%s'", k.c_str() );
   }
 
   glMatrixMode( GL_MODELVIEW );
@@ -137,7 +136,7 @@ MyGL_VertexAttributeStream MyGL_vertexAttributeStream( const char *name ){
 
   attrib.components = MYGL_X;
   attrib.normalized = GL_FALSE;
-  attrib.type = MYGL_FLOAT;
+  attrib.type = MYGL_VERTEX_FLOAT;
 
   s.info.name = MyGL_str64("");
   s.info.maxCount = 0;

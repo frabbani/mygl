@@ -75,15 +75,16 @@ typedef enum MyGL_Primitive_e {
   // MYGL_TRIANGLE_FAN = GL_TRIANGLE_FAN,
 } MyGL_Primitive;
 
-typedef enum MyGL_AttribType_e {
-  MYGL_CHAR = GL_BYTE,
-  MYGL_UCHAR = GL_UNSIGNED_BYTE,
-  MYGL_SHORT = GL_SHORT,
-  MYGL_USHORT = GL_UNSIGNED_SHORT,
-  MYGL_FLOAT = GL_FLOAT,
-  MYGL_INT  = GL_INT,
-  MYGL_UINT = GL_UNSIGNED_INT
-} MyGL_AttribType;
+
+typedef enum MyGL_VertexAttribType_e {
+  MYGL_VERTEX_CHAR    = GL_BYTE,
+  MYGL_VERTEX_UCHAR   = GL_UNSIGNED_BYTE,
+  MYGL_VERTEX_SHORT   = GL_SHORT,
+  MYGL_VERTEX_USHORT  = GL_UNSIGNED_SHORT,
+  MYGL_VERTEX_FLOAT   = GL_FLOAT,
+  MYGL_VERTEX_INT     = GL_INT,
+  MYGL_VERTEX_UINT    = GL_UNSIGNED_INT
+} MyGL_VertexAttribType;
 
 typedef enum MyGL_Components_e {
   MYGL_X    = 1,
@@ -91,6 +92,7 @@ typedef enum MyGL_Components_e {
   MYGL_XYZ  = 3,
   MYGL_XYZW = 4,
 } MyGL_Components;
+
 
 typedef union MyGL_Ptr_u{
   void      *p;
@@ -124,8 +126,10 @@ typedef union MyGL_ArrPtr{
   MyGL_Mat4 *mat4s;
 }MyGL_ArrPtr;
 
+
+
 typedef struct MyGL_VertexAttrib_s{
-  MyGL_AttribType type;
+  MyGL_VertexAttribType type;
   MyGL_Components components;
   GLboolean normalized;
 }MyGL_VertexAttrib;
@@ -237,6 +241,56 @@ typedef struct MyGL_s{
 
   MyGL_Str64 material;
 }MyGL;
+
+
+typedef enum MyGL_UniformType_e {
+  MYGL_UNIFORM_FLOAT       = GL_FLOAT,
+  MYGL_UNIFORM_FLOAT_VEC2  = GL_FLOAT_VEC2,
+  MYGL_UNIFORM_FLOAT_VEC3  = GL_FLOAT_VEC3,
+  MYGL_UNIFORM_FLOAT_VEC4  = GL_FLOAT_VEC4,
+  MYGL_UNIFORM_FLOAT_MAT2  = GL_FLOAT_MAT2,
+  MYGL_UNIFORM_FLOAT_MAT3  = GL_FLOAT_MAT3,
+  MYGL_UNIFORM_FLOAT_MAT4  = GL_FLOAT_MAT4,
+  MYGL_UNIFORM_INT         = GL_INT,
+  MYGL_UNIFORM_INT_VEC2    = GL_INT_VEC2,
+  MYGL_UNIFORM_INT_VEC3    = GL_INT_VEC3,
+  MYGL_UNIFORM_INT_VEC4    = GL_INT_VEC4,
+  MYGL_UNIFORM_UINT        = GL_UNSIGNED_INT,
+  MYGL_UNIFORM_UINT_VEC2   = GL_UNSIGNED_INT_VEC2,
+  MYGL_UNIFORM_UINT_VEC3   = GL_UNSIGNED_INT_VEC3,
+  MYGL_UNIFORM_UINT_VEC4   = GL_UNSIGNED_INT_VEC4,
+} MyGL_UniformType;
+
+
+typedef union MyGL_UniformValue_u{
+  GLint      int32;
+  MyGL_IVec2 ivec2;
+  MyGL_IVec3 ivec3;
+  MyGL_IVec4 ivec4;
+
+  GLuint     uint32;
+  MyGL_UVec2 uvec2;
+  MyGL_UVec3 uvec3;
+  MyGL_UVec4 uvec4;
+
+  GLfloat    floa;
+  MyGL_Vec2  vec2;
+  MyGL_Vec3  vec3;
+  MyGL_Vec4  vec4;
+
+  MyGL_Mat4  mat2;
+  MyGL_Mat4  mat3;
+  MyGL_Mat4  mat4;
+
+}MyGL_UniformValue;
+
+typedef struct{
+  struct{
+    MyGL_Str64         name;
+    MyGL_UniformType   type;
+  }info;
+  MyGL_UniformValue  *value;
+}MyGL_Uniform;
 
 
 #ifdef __cplusplus

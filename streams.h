@@ -9,16 +9,16 @@
 
 namespace mygl
 {
-uint32_t sizeOfAttrib( MyGL_AttribType t ){
+uint32_t sizeOfAttrib( MyGL_VertexAttribType t ){
   switch( t )
   {
-    case(MYGL_CHAR):
-    case(MYGL_UCHAR): return 1;
-    case(MYGL_SHORT):
-    case(MYGL_USHORT): return 2;
-    case(MYGL_INT):
-    case(MYGL_UINT):
-    case(MYGL_FLOAT):
+    case(MYGL_VERTEX_CHAR):
+    case(MYGL_VERTEX_UCHAR): return 1;
+    case(MYGL_VERTEX_SHORT):
+    case(MYGL_VERTEX_USHORT): return 2;
+    case(MYGL_VERTEX_INT):
+    case(MYGL_VERTEX_UINT):
+    case(MYGL_VERTEX_FLOAT):
     default: return 4;
   }
 }
@@ -35,16 +35,16 @@ struct VertexAttributeStream{
 
   constexpr MyGL_VertexAttrib type(){
     if( std::is_same<T, MyGL_Vec2>::value ){
-      return { MyGL_AttribType::MYGL_FLOAT, MYGL_XY, GL_FALSE };
+      return { MyGL_VertexAttribType::MYGL_VERTEX_FLOAT, MYGL_XY, GL_FALSE };
     }
     else if( std::is_same<T, MyGL_Vec3>::value ){
-      return { MyGL_AttribType::MYGL_FLOAT, MYGL_XYZ, GL_FALSE };
+      return { MyGL_VertexAttribType::MYGL_VERTEX_FLOAT, MYGL_XYZ, GL_FALSE };
     }
     else if( std::is_same<T, MyGL_Vec4>::value ){
-      return { MyGL_AttribType::MYGL_FLOAT, MYGL_XYZW, GL_FALSE };
+      return { MyGL_VertexAttribType::MYGL_VERTEX_FLOAT, MYGL_XYZW, GL_FALSE };
     }
     else
-      return { MyGL_AttribType::MYGL_FLOAT, MYGL_X, GL_FALSE };
+      return { MyGL_VertexAttribType::MYGL_VERTEX_FLOAT, MYGL_X, GL_FALSE };
   }
 
   MyGL_Str64 name;
@@ -93,37 +93,38 @@ struct StreamPrimitiveDrawer{
       }
     }
   };
+
+  //separated avoid lambda overhead
+  inline void draw( const DrawCtx& drawCtx, int index ){
+    for( size_t i = drawCtx.streams.size(); i > 0; i-- ){
+      float x = drawCtx.streams[i-1]->values[index].x;
+      float y = drawCtx.streams[i-1]->values[index].y;
+      float z = drawCtx.streams[i-1]->values[index].z;
+      float w = drawCtx.streams[i-1]->values[index].w;
+      glVertexAttrib4f( i-1, x, y, z, w );
+    }
+  };
+
   bool drawPrimitive( const DrawCtx& drawCtx ){
-
-    auto draw = [&]( int index ){
-      for( size_t i = drawCtx.streams.size(); i > 0; i-- ){
-        float x = drawCtx.streams[i-1]->values[index].x;
-        float y = drawCtx.streams[i-1]->values[index].y;
-        float z = drawCtx.streams[i-1]->values[index].z;
-        float w = drawCtx.streams[i-1]->values[index].w;
-        glVertexAttrib4f( i-1, x, y, z, w );
-      }
-    };
-
 
     switch( primitive ){
       case MYGL_QUADS:
-        draw( index++ );
-        draw( index++ );
-        draw( index++ );
-        draw( index++ );
+        draw( drawCtx, index++ );
+        draw( drawCtx, index++ );
+        draw( drawCtx, index++ );
+        draw( drawCtx, index++ );
         break;
       case MYGL_TRIANGLES:
-        draw( index++ );
-        draw( index++ );
-        draw( index++ );
+        draw( drawCtx, index++ );
+        draw( drawCtx, index++ );
+        draw( drawCtx, index++ );
         break;
       case MYGL_LINES:
-        draw( index++ );
-        draw( index++ );
+        draw( drawCtx, index++ );
+        draw( drawCtx, index++ );
         break;
       case MYGL_POINTS:
-        draw( index++ );
+        draw( drawCtx, index++ );
         break;
     }
     return next();

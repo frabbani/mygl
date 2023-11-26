@@ -72,7 +72,7 @@ namespace mygl
     struct Attrib : public MyGL_VertexAttrib {
     public:
       Attrib(){
-        type = MYGL_FLOAT;
+        type = MYGL_VERTEX_FLOAT;
         components = MYGL_X;
         normalized = GL_FALSE;
       }
@@ -84,7 +84,7 @@ namespace mygl
         *this = rhs;
       }
 
-      Attrib( MyGL_AttribType type_, MyGL_Components components_, GLboolean normalized_ ){
+      Attrib( MyGL_VertexAttribType type_, MyGL_Components components_, GLboolean normalized_ ){
         type = type_;
         components = components_;
         normalized = normalized_;
@@ -151,7 +151,7 @@ namespace mygl
       for( size_t i = 0; i < attribs.count; i++ ){
         glEnableVertexAttribArray( i );
         auto& attrib = attribs.attribs[i];
-        if( MYGL_FLOAT == attrib.type || attrib.normalized )
+        if( MYGL_VERTEX_FLOAT == attrib.type || attrib.normalized )
           glVertexAttribPointer( i, (GLint)attrib.components, (GLenum)attrib.type, attrib.normalized, stride, ptr );
         else
           glVertexAttribIPointer( i, (GLint)attrib.components, (GLenum)attrib.type, stride, ptr );

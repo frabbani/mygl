@@ -1,60 +1,31 @@
+#pragma once
+
 #include <vector>
 #include <map>
 #include <memory>
 #include <variant>
 #include <cstring>
+#include <string>
+#include <string_view>
+#include <sstream>
+#include <optional>
+#include <functional>
 
 namespace strutils{
 
-bool equals( const char *lhs, const char* rhs, int n = 0 ){
-  if( n <= 0 )
-    return 0 == std::strcmp( lhs, rhs );
-  return 0 == std::strncmp( lhs, rhs, n );
-}
+  bool equals( const char *lhs, const char* rhs, int n = 0 );
 
-bool equals( const std::string_view& lhs, const char* rhs, int n = 0 ){
-  return equals( lhs.data(), rhs );
-}
+  bool equals( const std::string_view& lhs, const char* rhs, int n = 0 );
 
-bool equals( const std::string_view& lhs, const std::string_view& rhs, int n = 0 ){
-  return equals( lhs.data(), rhs.data(), n );
-}
+  bool equals( const std::string_view& lhs, const std::string_view& rhs, int n = 0 );
 
-bool toUnsigned( std::string_view s, uint64_t &v ){
-  v = 0;
-  uint64_t mul = 1;
-  for( auto c : s ){
-    if( c < '0' || c > '9' )
-      return false;
-    v = v * mul + uint64_t( (int)c - (int)'0' );
-    mul = 10;
-  }
-  return true;
-}
+  bool toUnsigned( std::string_view s, uint64_t &v );
 
-bool toSigned( std::string_view s, int64_t &v ){
-  v = 0;
-  int64_t mul = 1;
-  auto it = s.begin();
-  if( *it == '-' ){
-    mul *= -1;
-    it++;
-  }
-  for( ; it != s.end(); ++it ){
-    auto c = *it;
-    if( c < '0' || c > '9' )
-      return false;
-    v = v * mul + int64_t( (int)c - (int)'0' );
-    mul = 10;
-  }
-
-  return true;
-}
-
+  bool toSigned( std::string_view s, int64_t &v );
 
 struct Lut{
   char chars[256];
-  char& operator[](int i){ return chars[i]; }
+  char& operator[](int i){ i = std::clamp( i, 0, 255 ); return chars[i]; }
 
   void delimit( const char *delims ){
     for( const char *c = delims; *c != '\0'; c++ )
@@ -168,7 +139,6 @@ public:
 
 };
 
-
 template<int L, int N> struct Tokenizer{
 
   int  count = 0;
@@ -239,7 +209,7 @@ template<int L, int N> struct Tokenizer{
 
 };
 
-template< int N> struct LineFeed{
+template<int N> struct LineFeed{
   using LineBuffer = Buffer<N>;
 
   std::vector<std::shared_ptr<LineBuffer>> lines;
@@ -304,9 +274,7 @@ template< int N> struct LineFeed{
 
 };
 
-
-template<typename T>
-struct KVParse{
+template<typename T> struct KVParse{
 public:
 
   using TokenFunc = std::function<bool(std::string_view)>;

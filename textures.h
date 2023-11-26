@@ -259,7 +259,7 @@ struct Texture2DArray : public Texture<3> {
       auto getMipMaps = [&]( bool freeMem = true ){
         if( freeMem )
           MyGL_mipChainFree( &mips );
-        mips = MyGL_mipChainCreate( MyGL_roImage(cell) );
+        mips = MyGL_mipChainCreate( MYGL_ROIMAGE(cell) );
       };
 
       utils::logout( "creating mip-mapped texture array" );
