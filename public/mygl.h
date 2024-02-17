@@ -7,17 +7,19 @@
 #include "image.h"
 #include "text.h"
 
-typedef void (*MyGL_LogFunc)( const char* );
+typedef void (*MyGL_LogFunc)(const char*);
 
 #define MYGL_MAX_SAMPLERS       16
 #define MYGL_MAX_VERTEX_ATTRIBS 16
 #define MYGL_TEXTURE_USAGE_UNIT (GL_TEXTURE0 + 8)
 
-typedef enum MyGL_CullMode_e{
-  MYGL_BACK = GL_BACK, MYGL_FRONT = GL_FRONT, MYGL_FRONT_AND_BACK = GL_FRONT_AND_BACK
+typedef enum MyGL_CullMode_e {
+  MYGL_BACK = GL_BACK,
+  MYGL_FRONT = GL_FRONT,
+  MYGL_FRONT_AND_BACK = GL_FRONT_AND_BACK
 } MyGL_CullMode;
 
-typedef enum MyGL_DepthMode_e{
+typedef enum MyGL_DepthMode_e {
   MYGL_ALWAYS = GL_ALWAYS,
   MYGL_NEVER = GL_NEVER,
   MYGL_LESS = GL_LESS,
@@ -28,7 +30,7 @@ typedef enum MyGL_DepthMode_e{
   MYGL_NOTEQUAL = GL_NOTEQUAL
 } MyGL_DepthMode;
 
-typedef enum MyGL_BlendMode_e{
+typedef enum MyGL_BlendMode_e {
   MYGL_ZERO = GL_ZERO,
   MYGL_ONE = GL_ONE,
   MYGL_SRC_COLOR = GL_SRC_COLOR,
@@ -45,7 +47,7 @@ typedef enum MyGL_BlendMode_e{
 // MYGL_ONE_MINUS_CONSTANT_ALPHA = GL_ONE_MINUS_CONSTANT_ALPHA,
 } MyGL_BlendMode;
 
-typedef enum MyGL_BlendFunc_e{
+typedef enum MyGL_BlendFunc_e {
   MYGL_FUNC_ADD = GL_FUNC_ADD,
   MYGL_FUNC_SUB = GL_FUNC_SUBTRACT,
   MYGL_FUNC_RSUB = GL_FUNC_REVERSE_SUBTRACT,
@@ -53,23 +55,26 @@ typedef enum MyGL_BlendFunc_e{
   MYGL_FUNC_MAX = GL_MAX,
 } MyGL_BlendFunc;
 
-typedef struct MyGL_BlendOp_s{
+typedef struct MyGL_BlendOp_s {
   MyGL_BlendMode src;
   MyGL_BlendMode dst;
   MyGL_BlendFunc func;
 } MyGL_BlendOp;
 
-typedef struct MyGL_Blend_s{
+typedef struct MyGL_Blend_s {
   GLboolean on;
   MyGL_BlendOp blendOp;
 } MyGL_Blend;
 
-typedef enum MyGL_Primitive_e{
-  MYGL_POINTS = GL_POINTS, MYGL_LINES = GL_LINES, MYGL_QUADS = GL_QUADS, MYGL_TRIANGLES = GL_TRIANGLES,
+typedef enum MyGL_Primitive_e {
+  MYGL_POINTS = GL_POINTS,
+  MYGL_LINES = GL_LINES,
+  MYGL_QUADS = GL_QUADS,
+  MYGL_TRIANGLES = GL_TRIANGLES,
 // MYGL_TRIANGLE_FAN = GL_TRIANGLE_FAN,
 } MyGL_Primitive;
 
-typedef enum MyGL_VertexAttribType_e{
+typedef enum MyGL_VertexAttribType_e {
   MYGL_VERTEX_CHAR = GL_BYTE,
   MYGL_VERTEX_UCHAR = GL_UNSIGNED_BYTE,
   MYGL_VERTEX_SHORT = GL_SHORT,
@@ -79,11 +84,14 @@ typedef enum MyGL_VertexAttribType_e{
   MYGL_VERTEX_UINT = GL_UNSIGNED_INT
 } MyGL_VertexAttribType;
 
-typedef enum MyGL_Components_e{
-  MYGL_X = 1, MYGL_XY = 2, MYGL_XYZ = 3, MYGL_XYZW = 4,
+typedef enum MyGL_Components_e {
+  MYGL_X = 1,
+  MYGL_XY = 2,
+  MYGL_XYZ = 3,
+  MYGL_XYZW = 4,
 } MyGL_Components;
 
-typedef union MyGL_Ptr_u{
+typedef union MyGL_Ptr_u {
   void *p;
   GLubyte *bytes;
   GLbyte *int8;
@@ -107,7 +115,7 @@ typedef union MyGL_Ptr_u{
   MyGL_Mat4 *mat4;
 } MyGL_Ptr;
 
-typedef union MyGL_ArrPtr{
+typedef union MyGL_ArrPtr {
   void *p;
   GLubyte *bytes;
   GLbyte *int8s;
@@ -131,49 +139,49 @@ typedef union MyGL_ArrPtr{
   MyGL_Mat4 *mat4s;
 } MyGL_ArrPtr;
 
-typedef struct MyGL_VertexAttrib_s{
+typedef struct MyGL_VertexAttrib_s {
   MyGL_VertexAttribType type;
   MyGL_Components components;
   GLboolean normalized;
 } MyGL_VertexAttrib;
 
-typedef struct MyGL_VertexAttributeStream_s{
+typedef struct MyGL_VertexAttributeStream_s {
   struct {
     MyGL_Str64 name;
-    GLuint maxCount;// #. of elements
+    GLuint maxCount;  // #. of elements
     MyGL_VertexAttrib attrib;
   } info;
   MyGL_ArrPtr arr;
 } MyGL_VertexAttributeStream;
 
-typedef struct MyGL_VboStream_s{
+typedef struct MyGL_VboStream_s {
   struct {
     MyGL_Str64 name;
-    GLuint maxCount;// #. of elements
+    GLuint maxCount;  // #. of elements
     GLuint numAttribs;
     MyGL_VertexAttrib attribs[ MYGL_MAX_VERTEX_ATTRIBS];
   } info;
   void *data;
 } MyGL_VboStream;
 
-typedef struct MyGL_IboStream_s{
+typedef struct MyGL_IboStream_s {
   struct {
     MyGL_Str64 name;
-    GLuint maxCount;// #. of elements
+    GLuint maxCount;  // #. of elements
   } info;
   uint32_t *data;
 } MyGL_IboStream;
 
-typedef struct MyGL_TboStream_s{
+typedef struct MyGL_TboStream_s {
   struct {
     MyGL_Str64 name;
-    GLuint maxCount;// #. of elements
+    GLuint maxCount;  // #. of elements
     MyGL_Components components;
   } info;
   float *data;
 } MyGL_TboStream;
 
-typedef struct MyGL_ColorFormat_s{
+typedef struct MyGL_ColorFormat_s {
   MyGL_Str24 name;
   GLint sizedFormat;
   GLint baseFormat;
@@ -182,19 +190,19 @@ typedef struct MyGL_ColorFormat_s{
   GLuint stencilBits;
 } MyGL_ColorFormat;
 
-typedef struct MyGL_Cull_s{
+typedef struct MyGL_Cull_s {
   GLboolean on;
   GLboolean frontIsCCW;
   MyGL_CullMode cullMode;
 } MyGL_Cull;
 
-typedef struct MyGL_Depth_s{
+typedef struct MyGL_Depth_s {
   GLboolean on;
   GLboolean depthWrite;
   MyGL_DepthMode depthMode;
 } MyGL_Depth;
 
-typedef enum MyGL_StencilAction_e{
+typedef enum MyGL_StencilAction_e {
   MYGL_KEEP = GL_KEEP,
   MYGL_ZEROOUT = GL_ZERO,
   MYGL_REPLACE = GL_REPLACE,
@@ -208,22 +216,22 @@ typedef enum MyGL_StencilAction_e{
 typedef MyGL_CullMode MyGL_StencilType;
 typedef MyGL_DepthMode MyGL_StencilMode;
 
-typedef struct MyGL_StencilOp_s{
+typedef struct MyGL_StencilOp_s {
   MyGL_StencilAction stencilFail;
   MyGL_StencilAction stencilPassDepthFail;
   MyGL_StencilAction stencilPassDepthPass;
 } MyGL_StencilOp;
 
-typedef struct MyGL_StencilTest_s{
+typedef struct MyGL_StencilTest_s {
   MyGL_StencilMode mode;
   GLint ref;
   GLuint mask;
 } MyGL_StencilTest;
 
-typedef struct MyGL_Stencil_s{
+typedef struct MyGL_Stencil_s {
   GLboolean on;
 // GLboolean        separate;
-  GLuint writeMask;// 8 bit
+  GLuint writeMask;  // 8 bit
   MyGL_StencilTest stencilTest;
   MyGL_StencilOp stencilOp;
 // MyGL_StencilTest stencilBackTest;
@@ -231,17 +239,17 @@ typedef struct MyGL_Stencil_s{
 
 } MyGL_Stencil;
 
-typedef struct MyGL_ColorMask_s{
+typedef struct MyGL_ColorMask_s {
   GLboolean red, green, blue, alpha;
 } MyGL_ColorMask;
 
-typedef struct MyGL_FrameBuffer_s{
-  MyGL_UVec4 viewPort;//x, y, w, h
+typedef struct MyGL_FrameBuffer_s {
+  MyGL_UVec4 viewPort;  //x, y, w, h
   MyGL_Str64 colorAttachments[8];
   MyGL_Str64 depthAttachment;
 } MyGL_FrameBuffer;
 
-typedef struct MyGL_s{
+typedef struct MyGL_s {
   MyGL_Cull cull;
   MyGL_Depth depth;
   MyGL_Blend blend;
@@ -271,7 +279,7 @@ typedef struct MyGL_s{
   MyGL_Str64 frameBuffer;
 } MyGL;
 
-typedef enum MyGL_UniformType_e{
+typedef enum MyGL_UniformType_e {
   MYGL_UNIFORM_FLOAT = GL_FLOAT,
   MYGL_UNIFORM_FLOAT_VEC2 = GL_FLOAT_VEC2,
   MYGL_UNIFORM_FLOAT_VEC3 = GL_FLOAT_VEC3,
@@ -289,7 +297,7 @@ typedef enum MyGL_UniformType_e{
   MYGL_UNIFORM_UINT_VEC4 = GL_UNSIGNED_INT_VEC4,
 } MyGL_UniformType;
 
-typedef union MyGL_UniformValue_u{
+typedef union MyGL_UniformValue_u {
   GLint int32;
   MyGL_IVec2 ivec2;
   MyGL_IVec3 ivec3;
@@ -311,7 +319,7 @@ typedef union MyGL_UniformValue_u{
 
 } MyGL_UniformValue;
 
-typedef struct {
+typedef struct MyGL_Uniform_s {
   struct {
     MyGL_Str64 name;
     MyGL_UniformType type;
@@ -320,17 +328,16 @@ typedef struct {
 } MyGL_Uniform;
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #define DLLEXPORT __declspec( dllexport )
 
 DLLEXPORT void MyGL_terminate();
-DLLEXPORT MyGL* MyGL_initialize( MyGL_LogFunc logger, int32_t initialize_glew, uint32_t stream_count );
-DLLEXPORT MyGL_VertexAttributeStream MyGL_vertexAttributeStream( const char *name );
-DLLEXPORT MyGL_ColorFormat MyGL_colorFormat( const char *name );
-DLLEXPORT void MyGL_drawStreaming( const char *streams );
+DLLEXPORT MyGL* MyGL_initialize(MyGL_LogFunc logger, int32_t initialize_glew, uint32_t stream_count);
+DLLEXPORT MyGL_VertexAttributeStream MyGL_vertexAttributeStream(const char *name);
+DLLEXPORT MyGL_ColorFormat MyGL_colorFormat(const char *name);
+DLLEXPORT void MyGL_drawStreaming(const char *streams);
 DLLEXPORT void MyGL_applyCull();
 DLLEXPORT void MyGL_applyDepth();
 DLLEXPORT void MyGL_applyBlend();
@@ -344,45 +351,44 @@ DLLEXPORT void MyGL_resetColorMask();
 
 DLLEXPORT void MyGL_bindSamplers();
 
-typedef char (*MyGl_GetCharFunc)( void* );
+typedef char (*MyGl_GetCharFunc)(void*);
 
-DLLEXPORT GLboolean MyGL_loadShaderLibrary( MyGl_GetCharFunc source_feed, void *source_param, const char *alias );
-DLLEXPORT GLboolean MyGL_loadShaderLibraryStr( const char *source_str, const char *alias );
-DLLEXPORT GLboolean MyGL_loadShader( MyGl_GetCharFunc source_feed, void *source_param, const char *alias );
-DLLEXPORT GLboolean MyGL_loadShaderStr( const char *source_str, const char *alias );
+DLLEXPORT GLboolean MyGL_loadShaderLibrary(MyGl_GetCharFunc source_feed, void *source_param, const char *alias);
+DLLEXPORT GLboolean MyGL_loadShaderLibraryStr(const char *source_str, const char *alias);
+DLLEXPORT GLboolean MyGL_loadShader(MyGl_GetCharFunc source_feed, void *source_param, const char *alias);
+DLLEXPORT GLboolean MyGL_loadShaderStr(const char *source_str, const char *alias);
 
-DLLEXPORT GLboolean MyGL_createTexture2D( const char *name, MyGL_ROImage image, const char *format, GLboolean filtered,
-                                          GLboolean mipmapped, GLboolean repeat );
+DLLEXPORT GLboolean MyGL_createTexture2D(const char *name, MyGL_ROImage image, const char *format, GLboolean filtered, GLboolean mipmapped, GLboolean repeat);
 
-DLLEXPORT GLboolean MyGL_createTexture2DArray( const char *name, MyGL_ROImage image_atlas, uint32_t num_rows, uint32_t num_cols,
-                                               const char *format, GLboolean filtered, GLboolean mipmapped, GLboolean repeat );
+DLLEXPORT GLboolean MyGL_createTexture2DArray(const char *name, MyGL_ROImage image_atlas, uint32_t num_rows, uint32_t num_cols, const char *format, GLboolean filtered, GLboolean mipmapped,
+                                              GLboolean repeat);
 
-DLLEXPORT void MyGL_clear( GLboolean color, GLboolean depth, GLboolean stencil );
+DLLEXPORT void MyGL_clear(GLboolean color, GLboolean depth, GLboolean stencil);
 
-DLLEXPORT GLboolean MyGL_createVbo( const char *name, uint32_t count, const MyGL_VertexAttrib *attribs, uint32_t num_attribs );
-DLLEXPORT MyGL_VboStream MyGL_vboStream( const char *name );
-DLLEXPORT void MyGL_vboPush( const char *name );
+DLLEXPORT GLboolean MyGL_createVbo(const char *name, uint32_t count, const MyGL_VertexAttrib *attribs, uint32_t num_attribs);
+DLLEXPORT MyGL_VboStream MyGL_vboStream(const char *name);
+DLLEXPORT void MyGL_vboPush(const char *name);
 
-DLLEXPORT GLboolean MyGL_createIbo( const char *name, uint32_t count );
-DLLEXPORT MyGL_IboStream MyGL_iboStream( const char *name );
-DLLEXPORT void MyGL_iboPush( const char *name );
+DLLEXPORT GLboolean MyGL_createIbo(const char *name, uint32_t count);
+DLLEXPORT MyGL_IboStream MyGL_iboStream(const char *name);
+DLLEXPORT void MyGL_iboPush(const char *name);
 
-DLLEXPORT GLboolean MyGL_createTbo( const char *name, uint32_t count, MyGL_Components components );
-DLLEXPORT MyGL_TboStream MyGL_tboStream( const char *name );
-DLLEXPORT void MyGL_tboPush( const char *name );
+DLLEXPORT GLboolean MyGL_createTbo(const char *name, uint32_t count, MyGL_Components components);
+DLLEXPORT MyGL_TboStream MyGL_tboStream(const char *name);
+DLLEXPORT void MyGL_tboPush(const char *name);
 
-DLLEXPORT MyGL_Uniform MyGL_findUniform( const char *material_name, const char *pass_name, const char *uniform_name );
+DLLEXPORT MyGL_Uniform MyGL_findUniform(const char *material_name, const char *pass_name, const char *uniform_name);
 
-DLLEXPORT void MyGL_drawVbo( const char *name, MyGL_Primitive primitive, GLint start_index, GLsizei index_count );
-DLLEXPORT void MyGL_drawIndexedVbo( const char *vbo_name, const char *ibo_name, MyGL_Primitive primitive, GLuint count );
+DLLEXPORT void MyGL_drawVbo(const char *name, MyGL_Primitive primitive, GLint start_index, GLsizei index_count);
+DLLEXPORT void MyGL_drawIndexedVbo(const char *vbo_name, const char *ibo_name, MyGL_Primitive primitive, GLuint count);
 
-DLLEXPORT MyGL_Str64 MyGL_Model_loadFromMem( const char *name, void *data, uint32_t size );
+DLLEXPORT GLboolean MyGL_loadModelArchive(const char *name, void *data, uint32_t size);
 
 DLLEXPORT GLboolean MyGL_Debug_getChatty();
-DLLEXPORT void MyGL_Debug_setChatty( GLboolean chatty );
+DLLEXPORT void MyGL_Debug_setChatty(GLboolean chatty);
 
-DLLEXPORT void MyGL_Trace_Stencil_set( char *output, uint32_t size );
-DLLEXPORT void MyGL_Trace_Stencil_tag( const char *tag );
+DLLEXPORT void MyGL_Trace_Stencil_set(char *output, uint32_t size);
+DLLEXPORT void MyGL_Trace_Stencil_tag(const char *tag);
 
 #ifdef __cplusplus
 }/* extern "C" */

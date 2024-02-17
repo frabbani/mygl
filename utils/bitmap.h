@@ -7,7 +7,7 @@
 namespace utils {
 namespace bmp {
 
-MyGL_Image imageFromBitmapData( std::vector< uint8_t > rawData, std::string_view source );
+MyGL_Image imageFromBitmapData(std::vector<uint8_t> rawData, std::string_view source);
 
 }
 }
