@@ -24,6 +24,7 @@ void Model::loadMesh(const char *meshFileData, uint32_t meshFileSize) {
     if (0 == strncmp(line.c_str(), "f ", 2))
       tCount++;
   }
+
   auto vboName = name + "-mesh-vbo";
   auto iboName = name + "-mesh-ibo";
 
@@ -68,6 +69,63 @@ void Model::loadMesh(const char *meshFileData, uint32_t meshFileSize) {
 
 std::map<std::string, std::shared_ptr<Model>> namedModels;
 
+void Model::loadFrames(const char *framesFileData, uint32_t framesFileSize) {
+  utils::CharStream s(framesFileData, framesFileSize);
+
+  uint32_t fCount = 0;
+
+  for (uint32_t i = 0; i < s.lineCount(); i++) {
+    std::string line = s.getLine(i);
+    if (0 == strncmp(line.c_str(), "frame", 5))
+      fCount++;
+  }
+  Vertex *verts = (Vertex*) meshVbo->dataPtr.p;
+  auto vCount = meshVbo->count;
+
+  std::vector<MyGL_Vec3> frameVertices;
+  std::vector<std::vector<MyGL_Vec3>> animations;
+  frameVertices.reserve(vCount);
+
+  int index = -1;
+  int count = 0;
+  for (uint32_t i = 0; i < s.lineCount(); i++) {
+    std::string line = s.getLine(i);
+    if (0 == strncmp(line.c_str(), "frame", 5)) {
+      index++;
+      count = 0;
+      for (uint32_t j = 0; j < vCount; j++) {
+        frameVertices.push_back(verts[i].p);
+      }
+      animations.push_back(std::move(frameVertices));
+    } else if ('v' == line[0] && ' ' == line[1] && index >= 0) {
+      MyGL_Vec3 p, n;
+      sscanf(&line[2], "%f,%f,%f %f,%f,%f", &p.x, &p.y, &p.z, &n.x, &n.y, &n.z);
+      animations.back()[count++] = p;
+    }
+  }
+
+  if (animations.size()) {
+    if (MyGL_Debug_getChatty()) {
+      utils::logout(" - %zu of animations, %zu vertices per", animations.size(), animations.front().size());
+    }
+    int i = 0;
+    for (const auto &frame : animations) {
+      std::string frameName = name + std::string("-frame-tbo") + std::to_string(i++);
+      MyGL_createTbo(frameName.c_str(), vCount, MYGL_XYZ);
+      frameTbos.push_back(namedTbos[frameName]);
+      int j = 0;
+      for (auto p : frame) {
+        frameTbos.back()->dataPtr.vec3s[j++] = p;
+      }
+      frameTbos.back()->push();
+      if (MyGL_Debug_getChatty()) {
+        utils::logout(" - created animation frame tbo '%s'", frameName.c_str());
+      }
+    }
+  }
+
+}
+
 bool Model::loadZipped(void *zipContent, uint32_t size, std::string_view name_) {
   mz_zip_archive zip;
 
@@ -98,10 +156,24 @@ bool Model::loadZipped(void *zipContent, uint32_t size, std::string_view name_) 
           if (c == '/' || c == '\\')
             c = '_';
         }
+        fileName = name + "-" + fileName;
         auto image = MyGL_imageFromBMPData(dataPtr, actualSize, fileName.c_str());
         MyGL_createTexture2D(fileName.c_str(), toRo(image), "rgb10a2", GL_TRUE, GL_TRUE, GL_TRUE);
         if (MyGL_Debug_getChatty())
           utils::logout(" - loading skin '%s'", fileName.c_str());
+        free(dataPtr);
+      }
+    }
+  }
+// Read frames after the mesh has been build
+  for (uint32_t i = 0; i < numFiles; i++) {
+    mz_zip_archive_file_stat fileStat;
+    if (mz_zip_reader_file_stat(&zip, i, &fileStat)) {
+      std::string fileName(fileStat.m_filename);
+      if (fileName.find("frames.txt") != std::string::npos) {
+        size_t actualSize = fileStat.m_uncomp_size;
+        void *dataPtr = mz_zip_reader_extract_file_to_heap(&zip, fileStat.m_filename, &actualSize, 0);
+        loadFrames((const char*) dataPtr, actualSize);
         free(dataPtr);
       }
     }
@@ -113,13 +185,14 @@ bool Model::loadZipped(void *zipContent, uint32_t size, std::string_view name_) 
 }
 
 GLboolean MyGL_loadModelArchive(const char *name, void *data, uint32_t size) {
-  mygl::Model model;
+  std::shared_ptr<mygl::Model> model = std::make_shared<mygl::Model>();
   if (MyGL_Debug_getChatty())
     utils::logout("%s Loading Model '%s':", __func__, name);
-  if (!model.loadZipped(data, size, name)) {
+  if (!model->loadZipped(data, size, name)) {
     utils::logout("failed", name);
     return GL_FALSE;
   }
+  mygl::namedModels[model->name] = model;
   return GL_TRUE;
 }
 

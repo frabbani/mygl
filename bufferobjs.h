@@ -162,6 +162,7 @@ struct Vbo : public Bo {
       ptr = (const void*) ((size_t) ptr + attrib.sizeInBytes());
     }
   }
+
 };
 
 struct Tbo : public Bo {

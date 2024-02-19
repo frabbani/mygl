@@ -29,6 +29,7 @@ struct Model {
   std::vector<std::shared_ptr<Tbo>> frameTbos;
 
   void loadMesh(const char *meshFileData, uint32_t meshFileSize);
+  void loadFrames(const char *framesFileData, uint32_t framesFileSize);
   bool loadZipped(void *zipContent, uint32_t size, std::string_view name);
 
 };
