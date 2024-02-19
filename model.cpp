@@ -159,8 +159,9 @@ bool Model::loadZipped(void *zipContent, uint32_t size, std::string_view name_) 
         fileName = name + "-" + fileName;
         auto image = MyGL_imageFromBMPData(dataPtr, actualSize, fileName.c_str());
         MyGL_createTexture2D(fileName.c_str(), toRo(image), "rgb10a2", GL_TRUE, GL_TRUE, GL_TRUE);
+        textureNames.push_back(std::move(fileName));
         if (MyGL_Debug_getChatty())
-          utils::logout(" - loading skin '%s'", fileName.c_str());
+          utils::logout(" - loading skin '%s'", textureNames.back().c_str());
         free(dataPtr);
       }
     }
