@@ -16,9 +16,9 @@ struct Model {
   struct Triangle {
     union {
       struct {
-        uint32_t indices[3];
+        uint32_t i, j, k;
       };
-      uint32_t i, j, k;
+      uint32_t indices[3];
     };
   };
 

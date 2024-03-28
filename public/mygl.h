@@ -383,6 +383,8 @@ DLLEXPORT void MyGL_drawVbo(const char *name, MyGL_Primitive primitive, GLint st
 DLLEXPORT void MyGL_drawIndexedVbo(const char *vbo_name, const char *ibo_name, MyGL_Primitive primitive, GLuint count);
 
 DLLEXPORT GLboolean MyGL_loadModelArchive(const char *name, void *data, uint32_t size);
+DLLEXPORT void MyGL_setModelArchiveTextures(const char *name, uint32_t skin_no, uint32_t skin_sampler, uint32_t *frame_samplers);
+DLLEXPORT void MyGL_drawModelArchive(const char *name);
 
 DLLEXPORT GLboolean MyGL_Debug_getChatty();
 DLLEXPORT void MyGL_Debug_setChatty(GLboolean chatty);

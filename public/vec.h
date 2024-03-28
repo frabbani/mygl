@@ -1,8 +1,8 @@
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
 
-typedef struct MyGL_IVec2_s{
+typedef struct MyGL_IVec2_s {
   union {
     struct {
       int32_t x, y;
@@ -11,7 +11,7 @@ typedef struct MyGL_IVec2_s{
   };
 } MyGL_IVec2;
 
-typedef struct MyGL_IVec3_s{
+typedef struct MyGL_IVec3_s {
   union {
     struct {
       int32_t x, y, z;
@@ -20,7 +20,7 @@ typedef struct MyGL_IVec3_s{
   };
 } MyGL_IVec3;
 
-typedef struct MyGL_IVec4_s{
+typedef struct MyGL_IVec4_s {
   union {
     struct {
       int32_t x, y, z, w;
@@ -29,7 +29,7 @@ typedef struct MyGL_IVec4_s{
   };
 } MyGL_IVec4;
 
-typedef struct MyGL_UVec2_s{
+typedef struct MyGL_UVec2_s {
   union {
     struct {
       uint32_t x, y;
@@ -38,7 +38,7 @@ typedef struct MyGL_UVec2_s{
   };
 } MyGL_UVec2;
 
-typedef struct MyGL_UVec3_s{
+typedef struct MyGL_UVec3_s {
   union {
     struct {
       uint32_t x, y, z;
@@ -47,7 +47,7 @@ typedef struct MyGL_UVec3_s{
   };
 } MyGL_UVec3;
 
-typedef struct MyGL_UVec4_s{
+typedef struct MyGL_UVec4_s {
   union {
     struct {
       uint32_t x, y, z, w;
@@ -56,7 +56,7 @@ typedef struct MyGL_UVec4_s{
   };
 } MyGL_UVec4;
 
-typedef struct MyGL_Vec2_s{
+typedef struct MyGL_Vec2_s {
   union {
     struct {
       float x, y;
@@ -65,7 +65,7 @@ typedef struct MyGL_Vec2_s{
   };
 } MyGL_Vec2;
 
-typedef struct MyGL_Vec3_s{
+typedef struct MyGL_Vec3_s {
   union {
     struct {
       float x, y, z;
@@ -74,7 +74,7 @@ typedef struct MyGL_Vec3_s{
   };
 } MyGL_Vec3;
 
-typedef struct MyGL_Vec4_s{
+typedef struct MyGL_Vec4_s {
   union {
     struct {
       float x, y, z, w;
@@ -83,7 +83,7 @@ typedef struct MyGL_Vec4_s{
   };
 } MyGL_Vec4;
 
-typedef struct MyGL_Mat2_s{
+typedef struct MyGL_Mat2_s {
   union {
     struct {
       float e00, e01;
@@ -94,7 +94,7 @@ typedef struct MyGL_Mat2_s{
   };
 } MyGL_Mat2;
 
-typedef struct MyGL_Mat3_s{
+typedef struct MyGL_Mat3_s {
   union {
     struct {
       float e00, e01, e02;
@@ -106,7 +106,7 @@ typedef struct MyGL_Mat3_s{
   };
 } MyGL_Mat3;
 
-typedef struct MyGL_Mat4_s{
+typedef struct MyGL_Mat4_s {
   union {
     struct {
       float e00, e01, e02, e03;

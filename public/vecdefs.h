@@ -20,6 +20,10 @@ static inline MyGL_Vec2 MyGL_vec2(float x, float y) {
   return v2;
 }
 
+static inline float MyGL_vec2Dot(MyGL_Vec2 lhs, MyGL_Vec2 rhs) {
+  return lhs.x * rhs.x + lhs.y * rhs.y;
+}
+
 static const MyGL_Vec3 MyGL_vec3Zero = { { { 0.0f, 0.0f, 0.0f } } };
 static const MyGL_Vec3 MyGL_vec3R = { { { 1.0f, 0.0f, 0.0f } } };
 static const MyGL_Vec3 MyGL_vec3L = { { { 0.0f, 1.0f, 0.0f } } };
@@ -109,6 +113,32 @@ static inline MyGL_Vec4 MyGL_vec4Scale(MyGL_Vec4 v, float s) {
   v.z *= s;
   v.w *= s;
   return v;
+}
+
+static inline float MyGL_mat2Det(MyGL_Mat2 M) {
+  return M.e00 * M.e11 - M.e10 * M.e01;
+}
+
+static inline MyGL_Mat2 MyGL_mat2Inv(MyGL_Mat2 M) {
+  float s = MyGL_mat2Det(M);
+  if (0.0f == s) {
+    M.e00 = M.e01 = M.e10 = M.e11 = 0.0f;
+    return M;
+  }
+  s = 1.0f / s;
+  MyGL_Mat2 M_inv;
+  M_inv.e00 = +s * M.e11;
+  M_inv.e01 = -s * M.e01;
+  M_inv.e10 = -s * M.e10;
+  M_inv.e11 = +s * M.e00;
+  return M_inv;
+}
+
+static inline MyGL_Vec2 MyGL_vec2Transf(MyGL_Mat2 M, MyGL_Vec2 v) {
+  MyGL_Vec2 r;
+  r.x = MyGL_vec2Dot(MyGL_vec2(M.e00, M.e01), v);
+  r.y = MyGL_vec2Dot(MyGL_vec2(M.e10, M.e11), v);
+  return r;
 }
 
 static const MyGL_Mat4 MyGL_mat4Identity = { { { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, } } };

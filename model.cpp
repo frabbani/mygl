@@ -5,8 +5,7 @@
 
 #include "image.h"
 #include "model.h"
-
-#include <optional>
+#include "shaders.h"
 
 namespace mygl {
 
@@ -38,7 +37,7 @@ void Model::loadMesh(const char *meshFileData, uint32_t meshFileSize) {
 
   if (MyGL_Debug_getChatty()) {
     utils::logout(" - created vbo '%s'(%u vertices)", vboName.data(), vCount);
-    utils::logout(" - created ibo '%s'(%u triangles)", vboName.data(), tCount);
+    utils::logout(" - created ibo '%s'(%u triangles)", iboName.data(), tCount);
   }
 
   int vi = 0;
@@ -58,8 +57,8 @@ void Model::loadMesh(const char *meshFileData, uint32_t meshFileSize) {
     }
     if (0 == strncmp(line.c_str(), "f ", 2)) {
       strutils::Tokenizer<128, 2> tokenizer;
-      tokenizer.tokenize(line.c_str(), " ");
-      sscanf(tokenizer[1].data(), "%d,%d,%d", &tris[ti].i, &tris[ti].j, &tris[ti].k);
+      tokenizer.tokenize(line.c_str(), " \n");
+      sscanf(tokenizer[1].data(), "%u,%u,%u", &tris[ti].i, &tris[ti].j, &tris[ti].k);
       ti++;
     }
   }
@@ -197,3 +196,47 @@ GLboolean MyGL_loadModelArchive(const char *name, void *data, uint32_t size) {
   return GL_TRUE;
 }
 
+void MyGL_setModelArchiveTextures(const char *name, uint32_t skin_no, uint32_t skin_sampler, uint32_t *frame_samplers) {
+  extern MyGL myGL;
+  auto it = mygl::namedModels.find(name);
+  if (it == mygl::namedModels.end()) {
+    utils::logout("%s - warning: couldn't find model archive '%s'", name);
+    return;
+  }
+  auto model = it->second;
+  if (skin_no < model->textureNames.size() && skin_sampler < MYGL_MAX_SAMPLERS) {
+    myGL.samplers[skin_sampler] = MyGL_str64(model->textureNames[skin_no].c_str());
+  }
+
+  for (int i = 0; i < MYGL_MAX_SAMPLERS; i++) {
+    uint32_t frame = frame_samplers[i * 2];
+    if (frame >= model->frameTbos.size())
+      break;
+    uint32_t sampler = frame_samplers[i * 2 + 1];
+    if (sampler >= MYGL_MAX_SAMPLERS)
+      break;
+    std::string frameName = model->name + std::string("-frame-tbo") + std::to_string(frame);
+    myGL.samplers[sampler] = MyGL_str64(frameName.c_str());
+  }
+}
+
+void MyGL_drawModelArchive(const char *name) {
+  extern MyGL myGL;
+  auto it = mygl::namedModels.find(name);
+  if (it == mygl::namedModels.end()) {
+    utils::logout("%s - warning: couldn't find model archive '%s'", name);
+    return;
+  }
+  auto model = it->second;
+  auto get = mygl::shaders::Materials::get(myGL.material.chars);
+  if (!get.has_value())
+    return;
+  auto &material = get.value().get();
+
+  model->meshVbo->bind();
+  model->meshIbo->bind();
+  for (uint32_t i = 0; i < material.numPasses(); i++) {
+    material.apply(i);
+    glDrawElements(MYGL_TRIANGLES, model->meshIbo->count, GL_UNSIGNED_INT, 0);
+  }
+}
