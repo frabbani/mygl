@@ -6,6 +6,7 @@
 #include "colors.h"
 #include "streams.h"
 #include "textures.h"
+#include "framebuffer.h"
 #include "mygl.h"
 #include "shaders.h"
 
@@ -339,6 +340,27 @@ GLboolean MyGL_createTexture2D(const char *name, MyGL_ROImage image, const char 
   named2DTextures[name] = tex;
   if (MyGL_Debug_getChatty()) {
     utils::logout("%s 2D texture '%s' created:", __func__, name);
+    tex->logInfo();
+  }
+  return GL_TRUE;
+}
+
+GLboolean MyGL_createEmptyTexture2D(const char *name, uint32_t w, uint32_t h, const char *format, GLboolean filtered, GLboolean repeat) {
+  if (!name) {
+    utils::logout("%s error: texture has no alias", __func__);
+    return GL_FALSE;
+  }
+
+  if (!w || !h) {
+    utils::logout("%s error: texture image '%s' is invalid", __func__, name);
+    return GL_FALSE;
+  }
+
+  MyGL_ROImage image = { w, h, nullptr };  //for mip-mapped textures, pixels cannot be null
+  auto tex = std::make_shared<Texture2D>(name, image, format, filtered, false, repeat);
+  named2DTextures[name] = tex;
+  if (MyGL_Debug_getChatty()) {
+    utils::logout("%s 2D texture (empty) '%s' created:", __func__, name);
     tex->logInfo();
   }
   return GL_TRUE;

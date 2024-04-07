@@ -9,9 +9,11 @@
 
 typedef void (*MyGL_LogFunc)(const char*);
 
+// TODO: read these values instead of hard-coding them
 #define MYGL_MAX_SAMPLERS       16
 #define MYGL_MAX_VERTEX_ATTRIBS 16
 #define MYGL_TEXTURE_USAGE_UNIT (GL_TEXTURE0 + 8)
+#define MYGL_MAX_COLOR_ATTACHMENTS  8
 
 typedef enum MyGL_CullMode_e {
   MYGL_BACK = GL_BACK,
@@ -245,8 +247,8 @@ typedef struct MyGL_ColorMask_s {
 
 typedef struct MyGL_FrameBuffer_s {
   MyGL_UVec4 viewPort;  //x, y, w, h
-  MyGL_Str64 colorAttachments[8];
-  MyGL_Str64 depthAttachment;
+  MyGL_Str64 name;
+  uint32_t order[8];  //-1 for
 } MyGL_FrameBuffer;
 
 typedef struct MyGL_s {
@@ -259,6 +261,7 @@ typedef struct MyGL_s {
   MyGL_Vec4 clearColor;
   float clearDepth;
   GLint clearStencil;
+  MyGL_UVec4 viewPort;
 
   MyGL_Primitive primitive;
   GLuint numPrimitives;
@@ -276,7 +279,7 @@ typedef struct MyGL_s {
   MyGL_Mat4 P_matrix;
 
   MyGL_Str64 material;
-  MyGL_Str64 frameBuffer;
+  MyGL_FrameBuffer frameBuffer;
 } MyGL;
 
 typedef enum MyGL_UniformType_e {
@@ -359,6 +362,7 @@ DLLEXPORT GLboolean MyGL_loadShader(MyGl_GetCharFunc source_feed, void *source_p
 DLLEXPORT GLboolean MyGL_loadShaderStr(const char *source_str, const char *alias);
 
 DLLEXPORT GLboolean MyGL_createTexture2D(const char *name, MyGL_ROImage image, const char *format, GLboolean filtered, GLboolean mipmapped, GLboolean repeat);
+DLLEXPORT GLboolean MyGL_createEmptyTexture2D(const char *name, uint32_t w, uint32_t h, const char *format, GLboolean filtered, GLboolean repeat);
 
 DLLEXPORT GLboolean MyGL_createTexture2DArray(const char *name, MyGL_ROImage image_atlas, uint32_t num_rows, uint32_t num_cols, const char *format, GLboolean filtered, GLboolean mipmapped,
                                               GLboolean repeat);
@@ -386,7 +390,13 @@ DLLEXPORT GLboolean MyGL_loadModelArchive(const char *name, void *data, uint32_t
 DLLEXPORT void MyGL_setModelArchiveTextures(const char *name, uint32_t skin_no, uint32_t skin_sampler, uint32_t *frame_samplers);
 DLLEXPORT void MyGL_drawModelArchive(const char *name);
 
-DLLEXPORT GLboolean MyGL_Debug_getChatty();
+DLLEXPORT GLboolean MyGL_createFbo(const char *name, uint32_t w, uint32_t h);
+DLLEXPORT GLboolean MyGL_fboAttachColor(const char *name, const char *texture_name);
+DLLEXPORT GLboolean MyGL_fboAttachDepthStencil(const char *name, const char *texture_name);
+DLLEXPORT GLboolean MyGL_finalizeFbo(const char *name);
+DLLEXPORT GLboolean MyGL_isFboComplete(const char *name);
+
+GLboolean MyGL_Debug_getChatty();
 DLLEXPORT void MyGL_Debug_setChatty(GLboolean chatty);
 
 DLLEXPORT void MyGL_Trace_Stencil_set(char *output, uint32_t size);
