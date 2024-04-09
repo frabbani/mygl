@@ -61,6 +61,9 @@ MyGL* MyGL_initialize(MyGL_LogFunc logger, int initialize_glew, uint32_t stream_
   myGL.stencil = static_cast<MyGL_Stencil>(statefulStencil->current());
   myGL.colorMask = static_cast<MyGL_ColorMask>(statefulColorMask->current());
 
+  for (int i = 0; i < MYGL_MAX_COLOR_ATTACHMENTS; i++)
+    myGL.drawBufferOrder[i] = i;
+
   stream_count = stream_count < 65536 * 3 ? 65536 * 3 : stream_count;
 
   utils::logout(" * cull is %s (%s).", myGL.cull.on ? "enabled" : "disabled", myGL.cull.frontIsCCW ? "CCW front" : "CW front");
@@ -277,6 +280,33 @@ void MyGL_bindSamplers() {
       }
     }
   }
+}
+
+void MyGL_bindFbo() {
+  auto reset = [&]() {
+    glViewport(myGL.viewPort.x, myGL.viewPort.y, myGL.viewPort.w, myGL.viewPort.h);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  };
+  if (myGL.frameBuffer.chars[0] == '\0') {
+    reset();
+    return;
+  }
+  auto f = namedFrameBuffers.find(myGL.frameBuffer.chars);
+  if (f == namedFrameBuffers.end()) {
+    reset();
+    return;
+  }
+  glViewport(myGL.viewPort.x, myGL.viewPort.y, myGL.viewPort.w, myGL.viewPort.h);
+  glBindFramebuffer(GL_FRAMEBUFFER, f->second.get()->buffer);
+  GLenum drawBuffers[MYGL_MAX_COLOR_ATTACHMENTS];
+  int n = 0;
+  for (; n < MYGL_MAX_COLOR_ATTACHMENTS; n++)
+    if (myGL.drawBufferOrder[n] >= 0 && myGL.drawBufferOrder[n] < MYGL_MAX_COLOR_ATTACHMENTS)
+      drawBuffers[n] = GL_COLOR_ATTACHMENT0 + myGL.drawBufferOrder[n];
+    else
+      break;
+  glDrawBuffers(n, drawBuffers);
+
 }
 
 GLboolean MyGL_loadShaderLibrary(MyGl_GetCharFunc source_feed, void *source_param, const char *alias) {

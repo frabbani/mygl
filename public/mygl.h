@@ -245,11 +245,10 @@ typedef struct MyGL_ColorMask_s {
   GLboolean red, green, blue, alpha;
 } MyGL_ColorMask;
 
-typedef struct MyGL_FrameBuffer_s {
-  MyGL_UVec4 viewPort;  //x, y, w, h
-  MyGL_Str64 name;
-  uint32_t order[8];  //-1 for
-} MyGL_FrameBuffer;
+typedef struct MyGL_ViewPort_s {
+  GLint x, y;
+  GLuint w, h;
+} MyGL_ViewPort;
 
 typedef struct MyGL_s {
   MyGL_Cull cull;
@@ -261,7 +260,7 @@ typedef struct MyGL_s {
   MyGL_Vec4 clearColor;
   float clearDepth;
   GLint clearStencil;
-  MyGL_UVec4 viewPort;
+  MyGL_ViewPort viewPort;
 
   MyGL_Primitive primitive;
   GLuint numPrimitives;
@@ -279,7 +278,8 @@ typedef struct MyGL_s {
   MyGL_Mat4 P_matrix;
 
   MyGL_Str64 material;
-  MyGL_FrameBuffer frameBuffer;
+  MyGL_Str64 frameBuffer;
+  int drawBufferOrder[MYGL_MAX_COLOR_ATTACHMENTS];
 } MyGL;
 
 typedef enum MyGL_UniformType_e {
@@ -395,6 +395,7 @@ DLLEXPORT GLboolean MyGL_fboAttachColor(const char *name, const char *texture_na
 DLLEXPORT GLboolean MyGL_fboAttachDepthStencil(const char *name, const char *texture_name);
 DLLEXPORT GLboolean MyGL_finalizeFbo(const char *name);
 DLLEXPORT GLboolean MyGL_isFboComplete(const char *name);
+DLLEXPORT void MyGL_bindFbo();
 
 GLboolean MyGL_Debug_getChatty();
 DLLEXPORT void MyGL_Debug_setChatty(GLboolean chatty);
