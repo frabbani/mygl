@@ -1,4 +1,5 @@
 #include "framebuffer.h"
+#include <utility>
 
 namespace mygl {
 /*
@@ -40,7 +41,20 @@ bool FrameBuffer::finalize() {
   return complete;
 }
 
+std::pair<std::shared_ptr<FrameBuffer>, std::shared_ptr<Texture<2>>> getFboAndTex(const std::string &fboName, const std::string &texName) {
+  std::shared_ptr<FrameBuffer> fbo = nullptr;
+  std::shared_ptr<Texture<2>> tex = nullptr;
+  auto it = namedFrameBuffers.find(fboName);
+  if (it != namedFrameBuffers.end())
+    fbo = it->second;
+
+  auto it2 = named2DTextures.find(texName);
+  if (it2 != named2DTextures.end())
+    tex = it2->second;
+
+  return {fbo, tex};
 }
+}  // namespace mygl
 
 GLboolean MyGL_createFbo(const char *name, uint32_t w, uint32_t h) {
   using namespace mygl;
@@ -70,22 +84,19 @@ GLboolean MyGL_fboAttachColor(const char *name, const char *texture_name) {
   using namespace mygl;
   std::shared_ptr<FrameBuffer> fbo = nullptr;
   std::shared_ptr<Texture<2>> tex = nullptr;
-  {
-    auto it = namedFrameBuffers.find(name);
-    if (it == namedFrameBuffers.end()) {
-      utils::logout("%s - error: FBO '%s' not found", __FUNCTION__, name);
-      return GL_FALSE;
-    }
-    fbo = it->second;
+
+  auto pair = getFboAndTex(name, texture_name);
+  if (!pair.first) {
+    utils::logout("%s - error: FBO '%s' not found", __FUNCTION__, name);
+    return GL_FALSE;
   }
-  {
-    auto it = named2DTextures.find(texture_name);
-    if (it == named2DTextures.end()) {
-      utils::logout("%s - error: FBO '%s' failed to attach color '%s' (not found)", __FUNCTION__, name, texture_name);
-      return GL_FALSE;
-    }
-    tex = it->second;
+  if (!pair.second) {
+    utils::logout("%s - error: FBO '%s' failed to attach color '%s' (not found)", __FUNCTION__, name, texture_name);
+    return GL_FALSE;
   }
+  fbo = std::move(pair.first);
+  tex = std::move(pair.second);
+
   if (tex->sizes[0] != fbo->w || tex->sizes[1] != fbo->h) {
     utils::logout("%s - error: FBO '%s' failed to attach color '%s' (size mismatch)", __FUNCTION__, name, texture_name);
     return GL_FALSE;
@@ -108,26 +119,54 @@ GLboolean MyGL_fboAttachDepthStencil(const char *name, const char *texture_name)
   using namespace mygl;
   std::shared_ptr<FrameBuffer> fbo = nullptr;
   std::shared_ptr<Texture<2>> tex = nullptr;
-  {
-    auto it = namedFrameBuffers.find(name);
-    if (it == namedFrameBuffers.end()) {
-      utils::logout("%s - error: FBO '%s' not found", __FUNCTION__, name);
-      return GL_FALSE;
-    }
-    fbo = it->second;
+
+  auto pair = getFboAndTex(name, texture_name);
+  if (!pair.first) {
+    utils::logout("%s - error: FBO '%s' not found", __FUNCTION__, name);
+    return GL_FALSE;
   }
-  {
-    auto it = named2DTextures.find(texture_name);
-    if (it == named2DTextures.end()) {
+
+  if (!texture_name) {
+    if (fbo->depthStencilName.has_value()) {
+      fbo->complete = false;
       fbo->depthStencilName = std::nullopt;
       fbo->depthStencilTexture = std::nullopt;
-      if (MyGL_Debug_getChatty()) {
-        utils::logout("%s - FBO '%s' depth/stencil texture released", name);
-      }
-      return GL_FALSE;
+      if (MyGL_Debug_getChatty())
+        utils::logout("%s - FBO '%s' depth/stencil texture released", __FUNCTION__, name);
+      return GL_TRUE;
     }
-    tex = it->second;
   }
+
+  if (!pair.second) {
+    utils::logout("%s - error: FBO '%s' failed to attach depth/stencil '%s' (not found)", __FUNCTION__, name, texture_name);
+    return GL_FALSE;
+  }
+
+  fbo = std::move(pair.first);
+  tex = std::move(pair.second);
+  /*
+   {
+   auto it = namedFrameBuffers.find(name);
+   if (it == namedFrameBuffers.end()) {
+   utils::logout("%s - error: FBO '%s' not found", __FUNCTION__, name);
+   return GL_FALSE;
+   }
+   fbo = it->second;
+   }
+   {
+   auto it = named2DTextures.find(texture_name);
+   if (it == named2DTextures.end()) {
+   fbo->depthStencilName = std::nullopt;
+   fbo->depthStencilTexture = std::nullopt;
+   if (MyGL_Debug_getChatty()) {
+   utils::logout("%s - FBO '%s' depth/stencil texture released", name);
+   }
+   return GL_FALSE;
+   }
+   tex = it->second;
+   }
+   */
+
   if (tex->sizes[0] != fbo->w || tex->sizes[1] != fbo->h) {
     utils::logout("%s - error: FBO '%s' failed to attach depth/stencil '%s' (size mismatch)", __FUNCTION__, name, texture_name);
     return GL_FALSE;

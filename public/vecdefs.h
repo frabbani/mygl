@@ -9,7 +9,8 @@
 #include <stdint.h>
 
 #include "vec.h"
-#include "math.h"
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 /** Math below uses right-handed coordinates, where right is +x, look is +y, and up is +z **/
 
@@ -298,6 +299,53 @@ static MyGL_Mat4 MyGL_mat4Yaw(MyGL_Vec3 p, float angleInRadians) {
   return mat4;
 }
 
+static MyGL_Mat4 MyGL_mat4RotateAxis(MyGL_Vec3 p, float angleInRadians, uint32_t axisType) {
+  if (1 == axisType)
+    angleInRadians = -angleInRadians;
+
+  float co = cosf(angleInRadians);
+  float sn = sinf(angleInRadians);
+  MyGL_Mat4 mat4 = MyGL_mat4Identity;
+  mat4.f4x4[0][3] = p.x;
+  mat4.f4x4[1][3] = p.y;
+  mat4.f4x4[2][3] = p.z;
+  mat4.f4x4[3][3] = 1.0f;
+
+  axisType %= 3;
+  if (0 == axisType) {
+    mat4.f4x4[1][1] = co;
+    mat4.f4x4[1][2] = -sn;
+    mat4.f4x4[2][1] = sn;
+    mat4.f4x4[2][2] = co;
+
+  } else if (1 == axisType) {
+    mat4.f4x4[0][0] = co;
+    mat4.f4x4[0][2] = -sn;
+    mat4.f4x4[2][0] = sn;
+    mat4.f4x4[2][2] = co;
+
+  } else if (2 == axisType) {
+    mat4.f4x4[0][0] = co;
+    mat4.f4x4[0][1] = -sn;
+    mat4.f4x4[1][0] = sn;
+    mat4.f4x4[1][1] = co;
+
+  }
+  return mat4;
+}
+
+static MyGL_Mat4 MyGL_mat4Scale(MyGL_Vec3 p, float xScale, float yScale, float zScale) {
+  MyGL_Mat4 mat4 = MyGL_mat4Identity;
+  mat4.f4x4[0][0] = xScale;
+  mat4.f4x4[1][1] = yScale;
+  mat4.f4x4[2][2] = zScale;
+  mat4.f4x4[0][3] = p.x;
+  mat4.f4x4[1][3] = p.y;
+  mat4.f4x4[2][3] = p.z;
+  mat4.f4x4[3][3] = 1.0f;
+
+  return mat4;
+}
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
