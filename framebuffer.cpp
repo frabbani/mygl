@@ -2,20 +2,6 @@
 #include <utility>
 
 namespace mygl {
-/*
- std::pair<bool, std::string> FrameBuffer::addColor(std::shared_ptr<Texture<2>> texture) {
- complete = false;
- if (colorTextures.size() >= GL_MAX_COLOR_ATTACHMENTS) {
- return {false, "color attachments exceeded"};
- }
- if (texture->sizes[0] != w || texture->sizes[1] != h)
- return {false, "dimension mismatch"};
-
- colorTextures.push_back(texture);
-
- return {true, "passed"};
- }
- */
 
 bool FrameBuffer::finalize() {
   if (complete)
