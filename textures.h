@@ -80,10 +80,11 @@ struct Texture {
     glGenTextures(1, &tex);
     glBindTexture(target, tex);
 
-    if (!mipmapped) {
-      glTexParameteri(target, GL_TEXTURE_BASE_LEVEL, 0);
+    glTexParameteri(target, GL_TEXTURE_BASE_LEVEL, 0);
+    if (!mipmapped)
       glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, 0);
-    }
+    else
+      glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, 1000);
 
     if (filtered) {
       glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -197,7 +198,12 @@ struct Texture2D : public Texture<2> {
     if (!mipmapped) {
       numMips = 1;
       // utils::logout( " - creating texture" );
-      glTexImage2D( GL_TEXTURE_2D, 0, format.sizedFormat, image.w, image.h, 0, GL_BGRA, GL_UNSIGNED_BYTE, image.pixels);
+      if (format.baseFormat == GL_DEPTH_STENCIL) {
+        glTexImage2D( GL_TEXTURE_2D, 0, format.sizedFormat, image.w, image.h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, image.pixels);
+
+      } else {
+        glTexImage2D( GL_TEXTURE_2D, 0, format.sizedFormat, image.w, image.h, 0, GL_BGRA, GL_UNSIGNED_BYTE, image.pixels);
+      }
     } else {
       // utils::logout(" - creating mip-mapped texture");
       MyGL_MipChain chain = MyGL_mipChainCreate(image);

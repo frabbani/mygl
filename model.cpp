@@ -66,8 +66,6 @@ void Model::loadMesh(const char *meshFileData, uint32_t meshFileSize) {
   MyGL_iboPush(iboName.c_str());
 }
 
-std::map<std::string, std::shared_ptr<Model>> namedModels;
-
 void Model::loadFrames(const char *framesFileData, uint32_t framesFileSize) {
   utils::CharStream s(framesFileData, framesFileSize);
 
