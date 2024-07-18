@@ -1,77 +1,69 @@
 #pragma once
 
-#include <string_view>
-#include <vector>
-#include <variant>
 #include <memory>
-
-namespace utils {
-
-namespace json {
+#include <optional>
+#include <vector>
+#include <string_view>
+#include <string>
 
 struct JsonImpl;
 
-class Json {
+struct Json {
   std::unique_ptr<JsonImpl> impl;
- public:
+  Json();
   Json(std::string_view content);
-  bool parse(std::string_view content);
-  template<class T>
-  const T& get(std::string_view key);
-  template<class T>
-  std::vector<T> getArray(std::string_view key);
+  ~Json();
+  Json(const Json &rhs);
+  void operator =(const Json &rhs);
+  std::optional<int> getInt(std::string_view key) const;
+  std::optional<bool> getBool(std::string_view key) const;
+  std::optional<float> getFloat(std::string_view key) const;
+  std::optional<std::string> getString(std::string_view key) const;
+  std::optional<Json> getObject(std::string_view key) const;
+
+  int getIntOr(std::string_view key, int other) const {
+    auto v = getInt(key);
+    return v.has_value() ? *v : other;
+  }
+
+  bool getBoolOr(std::string_view key, bool other) const {
+    auto v = getBool(key);
+    return v.value_or(other);
+  }
+
+  float getFloatOr(std::string_view key, float other) const {
+    auto v = getFloat(key);
+    return v.value_or(other);
+  }
+
+  std::string getStringOr(std::string_view key, const std::string &other) const {
+    auto v = getString(key);
+    return v.value_or(other);
+  }
+
+  Json getObjectOr(std::string_view key, const Json &other) const {
+    auto v = getObject(key);
+    return v.value_or(other);
+  }
+
+  std::optional<std::vector<int>> getIntArray(std::string_view key) const;
+  std::optional<std::vector<bool>> getBoolArray(std::string_view key) const;
+  std::optional<std::vector<float>> getFloatArray(std::string_view key) const;
+  std::optional<std::vector<std::string>> getStringArray(std::string_view key) const;
+  std::optional<std::vector<Json>> getObjectArray(std::string_view key) const;
+
+  void set(std::string_view key, int value);
+  void set(std::string_view key, bool value);
+  void set(std::string_view key, float value);
+  void set(std::string_view key, std::string_view value);
+  void set(std::string_view key, const Json &value);
+
+  void setArray(std::string_view key, const std::vector<int> &value);
+  void setArray(std::string_view key, const std::vector<bool> &value);
+  void setArray(std::string_view key, const std::vector<float> &value);
+  void setArray(std::string_view key, const std::vector<std::string> &value);
+  void setArray(std::string_view key, const std::vector<Json> &value);
+
+  std::string serialize() const;
+  std::string serialize(std::string_view key) const;
 };
-
-enum Type {
-  String,
-  Float,
-  Bool,
-  Object,
-  Strings,
-  Floats,
-  Bools,
-  Objects,
-  Null,
-};
-
-struct JString {
-  static constexpr Type type = Type::String;
-  std::string value;
-};
-
-struct JStrings {
-  static constexpr Type type = Type::Strings;
-  std::vector<std::string> values;
-};
-
-struct JFloat {
-  static constexpr Type type = Type::Float;
-  std::string value;
-};
-
-struct JFloats {
-  static constexpr Type type = Type::Floats;
-  std::vector<float> values;
-};
-
-struct JObject {
-  static constexpr Type type = Type::Object;
-  Json value;
-};
-
-struct JObjects {
-  static constexpr Type type = Type::Objects;
-  std::vector<JObject> values;
-};
-
-struct JNull {
-  static constexpr Type type = Type::Null;
-  std::nullptr_t value = nullptr;
-};
-
-using Value =std::variant<
-JString, JStrings, JFloat, JFloats, JNull
->;
-
-}
-}
