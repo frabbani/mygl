@@ -30,6 +30,10 @@ static const MyGL_Vec3 MyGL_vec3R = { { { 1.0f, 0.0f, 0.0f } } };
 static const MyGL_Vec3 MyGL_vec3L = { { { 0.0f, 1.0f, 0.0f } } };
 static const MyGL_Vec3 MyGL_vec3U = { { { 0.0f, 0.0f, 1.0f } } };
 
+static const MyGL_Vec3 MyGL_vec3X = { { { 1.0f, 0.0f, 0.0f } } };
+static const MyGL_Vec3 MyGL_vec3Y = { { { 0.0f, 1.0f, 0.0f } } };
+static const MyGL_Vec3 MyGL_vec3Z = { { { 0.0f, 0.0f, 1.0f } } };
+
 static inline MyGL_Vec3 MyGL_vec3(float x, float y, float z) {
   MyGL_Vec3 v3;
   v3.x = x;
