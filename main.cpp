@@ -105,7 +105,7 @@ MyGL* MyGL_initialize(MyGL_LogFunc logger, int initialize_glew, uint32_t stream_
   shaders::globalUniformSetters.emplace("mygl.matWorld", &myGL.W_matrix);
 
   shaders::globalUniformSetters.emplace("mygl.matProjViewWorld", [&]() -> MyGL_Mat4 {
-    MyGL_Mat4 m = std::move(MyGL_mat4Multiply(myGL.V_matrix, myGL.W_matrix));
+    MyGL_Mat4 m = MyGL_mat4Multiply(myGL.V_matrix, myGL.W_matrix);
     m = std::move(MyGL_mat4Multiply(myGL.P_matrix, std::move(m)));
     return m;
   });
@@ -442,7 +442,7 @@ void MyGL_clear(GLboolean color, GLboolean depth, GLboolean stencil) {
     flags |= GL_STENCIL_BUFFER_BIT;
   }
   if (flags)
-    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glClear(flags);
 }
 
 GLboolean MyGL_createVbo(const char *name, uint32_t count, const MyGL_VertexAttrib *attribs, uint32_t num_attribs) {

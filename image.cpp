@@ -159,7 +159,7 @@ MyGL_MipChain MyGL_mipChainCreate(MyGL_ROImage image) {
 void MyGL_mipChainFree(MyGL_MipChain *chain) {
   for (size_t i = 0; i < chain->count; i++)
     MyGL_imageFree(&chain->levels[i]);
-  memset((void*) &chain, 0, sizeof(MyGL_MipChain));
+  memset((void*) chain, 0, sizeof(MyGL_MipChain));
 }
 
 MyGL_Image MyGL_imageFromBMPData(const void *data, uint32_t size, const char *source) {

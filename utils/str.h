@@ -26,7 +26,7 @@ bool toSigned(std::string_view s, int64_t &v);
 struct Lut {
   char chars[256];
   char& operator[](int i) {
-    i = std::clamp(i, 0, 255);
+    i = i < 0 ? 0 : i > 255 ? 255 : i;
     return chars[i];
   }
 
