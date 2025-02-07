@@ -330,6 +330,35 @@ typedef struct MyGL_Uniform_s {
   MyGL_UniformValue *value;
 } MyGL_Uniform;
 
+typedef enum MyGL_ReadFormat_e {
+  MYGL_READ_STENCIL = GL_STENCIL_INDEX,
+  MYGL_READ_DEPTH = GL_DEPTH_COMPONENT,
+  MYGL_READ_DEPTHSTENCIL = GL_DEPTH_STENCIL,
+  MYGL_READ_R = GL_RED,
+  MYGL_READ_G = GL_GREEN,
+  MYGL_READ_B = GL_BLUE,
+  MYGL_READ_RGB = GL_RGB,
+  MYGL_READ_BGR = GL_BGR,
+  MYGL_READ_RGBA = GL_RGBA,
+  MYGL_READ_BGRA = GL_BGRA,
+} MyGL_ReadFormat;
+
+//TODO: implement ALL of these
+/*
+ GL_SHORT, GL_UNSIGNED_INT, GL_INT, GL_HALF_FLOAT, GL_FLOAT, GL_UNSIGNED_BYTE_3_3_2, GL_UNSIGNED_BYTE_2_3_3_REV, GL_UNSIGNED_SHORT_5_6_5, GL_UNSIGNED_SHORT_5_6_5_REV, GL_UNSIGNED_SHORT_4_4_4_4, GL_UNSIGNED_SHORT_4_4_4_4_REV, GL_UNSIGNED_SHORT_5_5_5_1, GL_UNSIGNED_SHORT_1_5_5_5_REV, GL_UNSIGNED_INT_8_8_8_8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_UNSIGNED_INT_10_10_10_2, GL_UNSIGNED_INT_2_10_10_10_REV, GL_UNSIGNED_INT_24_8, GL_UNSIGNED_INT_10F_11F_11F_REV, GL_UNSIGNED_INT_5_9_9_9_REV, or GL_FLOAT_32_UNSIGNED_INT_24_8_REV.
+ */
+
+typedef enum MyGL_ReadType_e {
+  MYGL_READ_CHAR = GL_BYTE,
+  MYGL_READ_BYTE = GL_UNSIGNED_BYTE,
+  MYGL_READ_SHORT = GL_SHORT,
+  MYGL_READ_USHORT = GL_UNSIGNED_SHORT,
+  MYGL_READ_INT = GL_INT,
+  MYGL_READ_UINT = GL_UNSIGNED_INT,
+  MYGL_READ_FLOAT = GL_FLOAT,
+  MYGL_READ_UINT_248 = GL_UNSIGNED_INT_24_8,
+} MyGL_ReadType;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -351,11 +380,11 @@ DLLEXPORT void MyGL_resetDepth();
 DLLEXPORT void MyGL_resetBlend();
 DLLEXPORT void MyGL_resetStencil();
 DLLEXPORT void MyGL_resetColorMask();
-
 DLLEXPORT void MyGL_bindSamplers();
 
 typedef char (*MyGl_GetCharFunc)(void*);
 
+DLLEXPORT void MyGL_readPixels(int x, int y, uint32_t w, uint32_t h, MyGL_ReadFormat format, MyGL_ReadType type, void *pixels);
 DLLEXPORT GLboolean MyGL_loadShaderLibrary(MyGl_GetCharFunc source_feed, void *source_param, const char *alias);
 DLLEXPORT GLboolean MyGL_loadShaderLibraryStr(const char *source_str, const char *alias);
 DLLEXPORT GLboolean MyGL_loadShader(MyGl_GetCharFunc source_feed, void *source_param, const char *alias);
