@@ -175,3 +175,7 @@ MyGL_Image MyGL_imageFromBMPData(const void *data, uint32_t size, const char *so
   return image;
 }
 
+MyGL_Image MyGL_imageFromPNGData(const void *data, uint32_t size, const char *source) {
+  MyGL_Image image = { .w = 0, .h = 0, .pixels = nullptr };
+  return image;
+}

@@ -1,8 +1,8 @@
 #include <algorithm>
 #include <type_traits>
 
-#include "json.hpp"
-#include "../json.h"
+#include "thirdparty/json/json.hpp"
+#include "json.h"
 
 using json = nlohmann::json;
 
@@ -79,10 +79,10 @@ struct JsonImpl {
   }
 
   std::optional<json> find(std::string_view key) const {
-    if( !key.size())
+    if (!key.size())
       return j;
-    auto it = j.find( key );
-    if( it == j.end() )
+    auto it = j.find(key);
+    if (it == j.end())
       return std::nullopt;
     return j[key];
   }
@@ -133,7 +133,7 @@ Json::Json(const Json &rhs)
     impl(std::make_unique<JsonImpl>(rhs.impl->j)) {
 }
 
-void Json::operator =(const Json &rhs){
+void Json::operator =(const Json &rhs) {
   impl = std::make_unique<JsonImpl>(rhs.impl->j);
 }
 
@@ -239,7 +239,7 @@ void Json::set(std::string_view key, float value) {
     impl->j = value;
 }
 
-void Json::set(std::string_view key,std::string_view value) {
+void Json::set(std::string_view key, std::string_view value) {
   if (key.length())
     impl->j[key] = value;
   else

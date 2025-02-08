@@ -1,7 +1,7 @@
 #include "utils/log.h"
 #include "utils/str.h"
 #include "utils/stateful.h"
-#include "utils/miniz.h"
+#include "utils/thirdparty/miniz/miniz.h"
 
 #include "colors.h"
 #include "streams.h"

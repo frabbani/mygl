@@ -1,5 +1,5 @@
 #include "utils/log.h"
-#include "utils/miniz.h"
+#include "utils/thirdparty/miniz/miniz.h"
 #include "utils/str.h"
 #include "utils/data.h"
 

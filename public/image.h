@@ -53,6 +53,7 @@ extern "C" {
 DLLEXPORT void MyGL_imageFree(MyGL_Image *image);
 DLLEXPORT MyGL_Image MyGL_imageAlloc(uint32_t w, uint32_t h);
 DLLEXPORT MyGL_Image MyGL_imageFromBMPData(const void *data, uint32_t size, const char *source);
+DLLEXPORT MyGL_Image MyGL_imageFromPNGData(const void *data, uint32_t size, const char *source);
 DLLEXPORT MyGL_Image MyGL_imageDup(MyGL_ROImage image);
 DLLEXPORT MyGL_Color MyGL_imageSampleBox(MyGL_ROImage image, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
 DLLEXPORT MyGL_Image MyGL_imageMip(MyGL_ROImage image);
