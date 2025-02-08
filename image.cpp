@@ -1,9 +1,16 @@
 #include "utils/bitmap.h"
 #include "utils/log.h"
+#include "utils/thirdparty/lodepng/lodepng.h"
 
 #include "image.h"
 #include <cstring>
 #include <vector>
+
+template<typename T> void swap(T &a, T &b) {
+  T t = a;
+  a = b;
+  b = t;
+}
 
 MyGL_Color MyGL_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
   MyGL_Color c;
@@ -177,5 +184,31 @@ MyGL_Image MyGL_imageFromBMPData(const void *data, uint32_t size, const char *so
 
 MyGL_Image MyGL_imageFromPNGData(const void *data, uint32_t size, const char *source) {
   MyGL_Image image = { .w = 0, .h = 0, .pixels = nullptr };
+
+  if (data && size) {
+    uint8_t *buffer;
+    int rc = lodepng_decode32(&buffer, &image.w, &image.h, (const uint8_t*) data, size);
+    if (rc) {
+      const char *error = lodepng_error_text(rc);
+      utils::logout("error: '%s' PNG decoding failed, reason '%s'", source, error);
+      return image;
+    }
+    image.pixels = (MyGL_Color*) buffer;
+
+    // flip
+    for (size_t y = 0; y < image.h / 2; y++) {
+      size_t topRowStart = y * image.w;
+      size_t bottomRowStart = (image.h - 1 - y) * image.w;
+      for (size_t x = 0; x < image.w; x++)
+        swap<MyGL_Color>(image.pixels[topRowStart + x], image.pixels[bottomRowStart + x]);
+    }
+
+    // rgba -> bgra
+    for (size_t i = 0; i < image.w * image.h; i++)
+      swap<uint8_t>(image.pixels[i].rgba[0], image.pixels[i].rgba[2]);
+
+    if (MyGL_Debug_getChatty())
+      utils::logout("%s - image '%s' (%d x %d)", __func__, source, image.w, image.h);
+  }
   return image;
 }
