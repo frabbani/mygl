@@ -195,8 +195,7 @@ void MyGL_drawStreaming(const char *streams) {
   for (uint32_t i = 0; i < material.numPasses(); i++) {
     material.apply(i);
     glBegin(myGL.primitive);
-    while (drawer.drawPrimitive(ctx)) {
-    }
+    drawer.drawPrimitives(ctx);
     glEnd();
     drawer.reset();
   }
@@ -277,6 +276,34 @@ void MyGL_bindSamplers() {
           f->second->apply(i);
 //utils::logout( "%s - binding '%s' to %d", __FUNCTION__, f->first.c_str(), (int)i );
         }
+      }
+    }
+  }
+}
+
+void MyGL_bindSampler(uint32_t index) {
+  if (myGL.samplers[index].chars[0] != '\0') {
+    {
+      auto f = named2DTextures.find(myGL.samplers[index].chars);
+      if (f != named2DTextures.end()) {
+        f->second->apply(index);
+//utils::logout( "%s - binding '%s' to %d", __FUNCTION__, f->first.c_str(), (int)i );
+      }
+    }
+
+    {
+      auto f = named3DTextures.find(myGL.samplers[index].chars);
+      if (f != named3DTextures.end()) {
+        f->second->apply(index);
+//utils::logout( "%s - binding '%s' to %d", __FUNCTION__, f->first.c_str(), (int)i );
+      }
+    }
+
+    {
+      auto f = namedTbos.find(myGL.samplers[index].chars);
+      if (f != namedTbos.end()) {
+        f->second->apply(index);
+//utils::logout( "%s - binding '%s' to %d", __FUNCTION__, f->first.c_str(), (int)i );
       }
     }
   }

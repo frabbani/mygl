@@ -120,6 +120,10 @@ static inline MyGL_Vec4 MyGL_vec4Scale(MyGL_Vec4 v, float s) {
   return v;
 }
 
+static inline float MyGL_vec4Dot(MyGL_Vec4 lhs, MyGL_Vec4 rhs) {
+  return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z + lhs.w * rhs.w;
+}
+
 static inline float MyGL_mat2Det(MyGL_Mat2 M) {
   return M.e00 * M.e11 - M.e10 * M.e01;
 }
@@ -143,6 +147,15 @@ static inline MyGL_Vec2 MyGL_vec2Transf(MyGL_Mat2 M, MyGL_Vec2 v) {
   MyGL_Vec2 r;
   r.x = MyGL_vec2Dot(MyGL_vec2(M.e00, M.e01), v);
   r.y = MyGL_vec2Dot(MyGL_vec2(M.e10, M.e11), v);
+  return r;
+}
+
+static inline MyGL_Vec4 MyGL_vec4Transf(MyGL_Mat4 M, MyGL_Vec4 v) {
+  MyGL_Vec4 r;
+  r.x = MyGL_vec4Dot(MyGL_vec4(M.e00, M.e01, M.e02, M.e03), v);
+  r.y = MyGL_vec4Dot(MyGL_vec4(M.e10, M.e11, M.e12, M.e13), v);
+  r.z = MyGL_vec4Dot(MyGL_vec4(M.e20, M.e21, M.e22, M.e23), v);
+  r.w = MyGL_vec4Dot(MyGL_vec4(M.e30, M.e31, M.e32, M.e33), v);
   return r;
 }
 

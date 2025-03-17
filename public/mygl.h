@@ -381,6 +381,7 @@ DLLEXPORT void MyGL_resetBlend();
 DLLEXPORT void MyGL_resetStencil();
 DLLEXPORT void MyGL_resetColorMask();
 DLLEXPORT void MyGL_bindSamplers();
+DLLEXPORT void MyGL_bindSampler(uint32_t index);
 
 typedef char (*MyGl_GetCharFunc)(void*);
 
