@@ -21,34 +21,50 @@ namespace mygl {
 
 extern const MyGL_ColorFormat& colorFormatByName(const char*);
 
-struct TextureData : public std::enable_shared_from_this<TextureData> {
+struct TextureData {
   GLenum format;
   GLenum type;
   size_t size;
   MyGL_ArrPtr pixels;
- private:
-  TextureData(GLenum format_, GLenum type_, size_t size_)
-      :
-      format(format_),
-      type(type_) {
-    size = size_ < sizeof(MyGL_Vec4) ? sizeof(MyGL_Vec4) : size_;
-    pixels.bytes = new GLubyte[size];
-  }
  public:
-  ~TextureData() {
-    size = 0;
-    delete[] pixels.bytes;
-    pixels.p = NULL;
-  }
+  /*
+   TextureData(GLenum format_, GLenum type_, size_t size_)
+   :
+   format(format_),
+   type(type_) {
+   size = size_ < sizeof(MyGL_Vec4) ? sizeof(MyGL_Vec4) : size_;
+   pixels.bytes = new GLubyte[size];
+   }
+   */
 
-  std::shared_ptr<TextureData> getptr() {
-    return shared_from_this();
-  }
+  /*
+   TextureData(MyGL_ColorFormat colorFormat, size_t size_, void *pixelData)
+   :
+   format(colorFormat.),
+   type(type_),
+   size(size_) {
+   pixels.p = data;
+   }
+   */
 
-  [[nodiscard]] static std::shared_ptr<TextureData> createShared(GLenum format, GLenum type, size_t size) {
-// Not using std::make_shared<Best> because the c'tor is private.
-    return std::shared_ptr<TextureData>(new TextureData(format, type, size));
-  }
+  /*
+   ~TextureData() {
+   size = 0;
+   delete[] pixels.bytes;
+   pixels.p = NULL;
+   }
+   */
+
+  /*
+   std::shared_ptr<TextureData> getptr() {
+   return shared_from_this();
+   }
+
+   [[nodiscard]] static std::shared_ptr<TextureData> createShared(GLenum format, GLenum type, size_t size) {
+   // Not using std::make_shared<Best> because the c'tor is private.
+   return std::shared_ptr<TextureData>(new TextureData(format, type, size));
+   }
+   */
 };
 
 template<int N>
@@ -121,19 +137,20 @@ struct Texture {
     return s;
   }
 
-  void pullData(GLuint level, std::shared_ptr<TextureData> data, GLuint unit = MYGL_TEXTURE_USAGE_UNIT) {
-    if (level > numMipLevels())
-      return;
+  /*
+   void pullData(GLuint level, TextureData &data, GLuint unit = MYGL_TEXTURE_USAGE_UNIT) {
+   if (level > numMipLevels())
+   return;
 
-    size_t required = getSize();
-    if (data->size < required) {
-      data = TextureData::createShared(data->format, data->type, required);
-    }
-    glActiveTexture(unit);
-    glBindTexture(target, tex);
-    glGetTexImage(target, level, data->format, data->type, data->pixels.p);
-  }
-
+   size_t required = getSize();
+   if (data.size < required) {
+   data = TextureData::createShared(data->format, data->type, required);
+   }
+   glActiveTexture(unit);
+   glBindTexture(target, tex);
+   glGetTexImage(target, level, data->format, data->type, data->pixels.p);
+   }
+   */
   virtual void logInfo() {
     int w, h, d, f, r, g, b, a, l, i;
 
@@ -170,6 +187,7 @@ struct Texture {
       ss << "d=" << d << " ";
     utils::logout("%s", ss.str().c_str());
   }
+
 };
 
 struct Texture2D : public Texture<2> {
@@ -224,23 +242,33 @@ struct Texture2D : public Texture<2> {
     glBindTexture(target, tex);
   }
 
-  void pushData(GLint level, GLint x, GLint y, GLsizei w, GLsizei h, std::shared_ptr<TextureData> data, GLuint unit =
-  MYGL_TEXTURE_USAGE_UNIT) {
-    if (level > (GLint) numMips || data->size < (size_t) (w * h))
+  void pushData(GLint level, GLint x, GLint y, GLsizei w, GLsizei h, MyGL_WriteFormat format, MyGL_ReadWriteType type, MyGL_ArrPtr pixels, GLuint unit = MYGL_TEXTURE_USAGE_UNIT) {
+    if (level > (GLint) numMips)
       return;
     glActiveTexture(unit);
     glBindTexture(target, tex);
-    glTexSubImage2D(target, level, x, y, w, h, data->format, data->type, data->pixels.p);
+    glTexSubImage2D(target, level, x, y, w, h, format, type, pixels.p);
   }
 
-  void pushData(GLint level, std::shared_ptr<TextureData> data, GLuint unit = MYGL_TEXTURE_USAGE_UNIT) {
-    if (level > (GLint) numMips || data->size < getSize())
-      return;
+  /*
+   void pushData(GLint level, GLint x, GLint y, GLsizei w, GLsizei h, const TextureData &data, GLuint unit =
+   MYGL_TEXTURE_USAGE_UNIT) {
+   if (level > (GLint) numMips || data.size < (size_t) (w * h))
+   return;
+   glActiveTexture(unit);
+   glBindTexture(target, tex);
+   glTexSubImage2D(target, level, x, y, w, h, data.format, data.type, data.pixels.p);
+   }
 
-    glActiveTexture(unit);
-    glBindTexture(target, tex);
-    glTexSubImage2D(target, level, 0, 0, sizes[0], sizes[1], data->format, data->type, data->pixels.p);
-  }
+   void pushData(GLint level, const TextureData &data, GLuint unit = MYGL_TEXTURE_USAGE_UNIT) {
+   if (level > (GLint) numMips || data.size < getSize())
+   return;
+
+   glActiveTexture(unit);
+   glBindTexture(target, tex);
+   glTexSubImage2D(target, level, 0, 0, sizes[0], sizes[1], data.format, data.type, data.pixels.p);
+   }
+   */
 
 };
 

@@ -402,6 +402,23 @@ GLboolean MyGL_createTexture2D(const char *name, MyGL_ROImage image, const char 
   return GL_TRUE;
 }
 
+DLLEXPORT GLboolean MyGL_uploadTexture2D(const char *name, MyGL_WriteFormat format, MyGL_ReadWriteType type, uint32_t w, uint32_t h, void *pixels) {
+  if (!name) {
+    utils::logout("%s error: no texture specified", __func__);
+    return GL_FALSE;
+  }
+  auto find = named2DTextures.find(name);
+  if (find == named2DTextures.end()) {
+    utils::logout("%s warning: texture '%s' not found", __func__, name);
+    return GL_FALSE;
+  }
+  auto tex = std::dynamic_pointer_cast<Texture2D>(find->second);
+  MyGL_ArrPtr ptr;
+  ptr.p = pixels;
+  tex->pushData(0, 0, 0, w, h, format, type, ptr);
+  return true;
+}
+
 GLboolean MyGL_createEmptyTexture2D(const char *name, uint32_t w, uint32_t h, const char *format, GLboolean filtered, GLboolean repeat) {
   if (!name) {
     utils::logout("%s error: texture has no alias", __func__);
@@ -690,7 +707,7 @@ void MyGL_Trace_Stencil_tag(const char *tag) {
     trace::stencilOut.value().tag(tag);
 }
 
-void MyGL_readPixels(int x, int y, uint32_t w, uint32_t h, MyGL_ReadFormat format, MyGL_ReadType type, void *pixels) {
+void MyGL_readPixels(int x, int y, uint32_t w, uint32_t h, MyGL_ReadFormat format, MyGL_ReadWriteType type, void *pixels) {
   if (pixels)
     glReadPixels(x, y, w, h, format, type, pixels);
 }

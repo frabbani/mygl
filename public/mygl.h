@@ -343,21 +343,32 @@ typedef enum MyGL_ReadFormat_e {
   MYGL_READ_BGRA = GL_BGRA,
 } MyGL_ReadFormat;
 
+typedef enum MyGL_WriteFormat_e {
+  MYGL_WRITE_STENCIL = GL_STENCIL_INDEX,
+  MYGL_WRITE_DEPTH = GL_DEPTH_COMPONENT,
+  MYGL_WRITE_R = GL_RED,
+  MYGL_WRITE_RG = GL_RG,
+  MYGL_WRITE_RGB = GL_RGB,
+  MYGL_WRITE_BGR = GL_BGR,
+  MYGL_WRITE_RGBA = GL_RGBA,
+  MYGL_WRITE_BGRA = GL_BGRA,
+} MyGL_WriteFormat;
+
 //TODO: implement ALL of these
 /*
  GL_SHORT, GL_UNSIGNED_INT, GL_INT, GL_HALF_FLOAT, GL_FLOAT, GL_UNSIGNED_BYTE_3_3_2, GL_UNSIGNED_BYTE_2_3_3_REV, GL_UNSIGNED_SHORT_5_6_5, GL_UNSIGNED_SHORT_5_6_5_REV, GL_UNSIGNED_SHORT_4_4_4_4, GL_UNSIGNED_SHORT_4_4_4_4_REV, GL_UNSIGNED_SHORT_5_5_5_1, GL_UNSIGNED_SHORT_1_5_5_5_REV, GL_UNSIGNED_INT_8_8_8_8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_UNSIGNED_INT_10_10_10_2, GL_UNSIGNED_INT_2_10_10_10_REV, GL_UNSIGNED_INT_24_8, GL_UNSIGNED_INT_10F_11F_11F_REV, GL_UNSIGNED_INT_5_9_9_9_REV, or GL_FLOAT_32_UNSIGNED_INT_24_8_REV.
  */
 
-typedef enum MyGL_ReadType_e {
-  MYGL_READ_CHAR = GL_BYTE,
-  MYGL_READ_BYTE = GL_UNSIGNED_BYTE,
-  MYGL_READ_SHORT = GL_SHORT,
-  MYGL_READ_USHORT = GL_UNSIGNED_SHORT,
-  MYGL_READ_INT = GL_INT,
-  MYGL_READ_UINT = GL_UNSIGNED_INT,
-  MYGL_READ_FLOAT = GL_FLOAT,
-  MYGL_READ_UINT_248 = GL_UNSIGNED_INT_24_8,
-} MyGL_ReadType;
+typedef enum MyGL_ReadWriteType_e {
+  MYGL_READWRITE_CHAR = GL_BYTE,
+  MYGL_READWRITE_BYTE = GL_UNSIGNED_BYTE,
+  MYGL_READWRITE_SHORT = GL_SHORT,
+  MYGL_READWRITE_USHORT = GL_UNSIGNED_SHORT,
+  MYGL_READWRITE_INT = GL_INT,
+  MYGL_READWRITE_UINT = GL_UNSIGNED_INT,
+  MYGL_READWRITE_FLOAT = GL_FLOAT,
+  MYGL_READWRITE_UINT_248 = GL_UNSIGNED_INT_24_8,
+} MyGL_ReadWriteType;
 
 #ifdef __cplusplus
 extern "C" {
@@ -385,7 +396,7 @@ DLLEXPORT void MyGL_bindSampler(uint32_t index);
 
 typedef char (*MyGl_GetCharFunc)(void*);
 
-DLLEXPORT void MyGL_readPixels(int x, int y, uint32_t w, uint32_t h, MyGL_ReadFormat format, MyGL_ReadType type, void *pixels);
+DLLEXPORT void MyGL_readPixels(int x, int y, uint32_t w, uint32_t h, MyGL_ReadFormat format, MyGL_ReadWriteType type, void *pixels);
 DLLEXPORT GLboolean MyGL_loadShaderLibrary(MyGl_GetCharFunc source_feed, void *source_param, const char *alias);
 DLLEXPORT GLboolean MyGL_loadShaderLibraryStr(const char *source_str, const char *alias);
 DLLEXPORT GLboolean MyGL_loadShader(MyGl_GetCharFunc source_feed, void *source_param, const char *alias);
@@ -393,6 +404,7 @@ DLLEXPORT GLboolean MyGL_loadShaderStr(const char *source_str, const char *alias
 
 DLLEXPORT GLboolean MyGL_createTexture2D(const char *name, MyGL_ROImage image, const char *format, GLboolean filtered, GLboolean mipmapped, GLboolean repeat);
 DLLEXPORT GLboolean MyGL_createEmptyTexture2D(const char *name, uint32_t w, uint32_t h, const char *format, GLboolean filtered, GLboolean repeat);
+DLLEXPORT GLboolean MyGL_uploadTexture2D(const char *name, MyGL_WriteFormat format, MyGL_ReadWriteType type, uint32_t w, uint32_t h, void *pixels);
 
 DLLEXPORT GLboolean MyGL_createTexture2DArray(const char *name, MyGL_ROImage image_atlas, uint32_t num_rows, uint32_t num_cols, const char *format, GLboolean filtered, GLboolean mipmapped,
                                               GLboolean repeat);
