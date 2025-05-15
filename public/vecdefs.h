@@ -21,8 +21,40 @@ static inline MyGL_Vec2 MyGL_vec2(float x, float y) {
   return v2;
 }
 
+static inline MyGL_Vec2 MyGL_vec2Add(MyGL_Vec2 lhs, MyGL_Vec2 rhs) {
+  lhs.x += rhs.x;
+  lhs.y += rhs.y;
+  return lhs;
+}
+
+static inline MyGL_Vec2 MyGL_vec2Sub(MyGL_Vec2 lhs, MyGL_Vec2 rhs) {
+  lhs.x -= rhs.x;
+  lhs.y -= rhs.y;
+  return lhs;
+}
+
+static inline MyGL_Vec2 MyGL_vec2Scale(MyGL_Vec2 v, float s) {
+  v.x *= s;
+  v.y *= s;
+  return v;
+}
+
 static inline float MyGL_vec2Dot(MyGL_Vec2 lhs, MyGL_Vec2 rhs) {
   return lhs.x * rhs.x + lhs.y * rhs.y;
+}
+
+static inline float MyGL_vec2Mag(MyGL_Vec2 v) {
+  float s = v.x * v.x + v.y * v.y;
+  if (s < 1e-9f)
+    return 0.0f;
+  return sqrtf(s);
+}
+
+static MyGL_Vec2 MyGL_vec2Norm(MyGL_Vec2 v) {
+  float s = v.x * v.x + v.y * v.y;
+  if (s < 1e-9f)
+    return MyGL_vec2(0.0f, 0.0f);
+  return MyGL_vec2Scale(v, 1.0f / s);
 }
 
 static const MyGL_Vec3 MyGL_vec3Zero = { { { 0.0f, 0.0f, 0.0f } } };
