@@ -9,15 +9,10 @@
 #include "framebuffer.h"
 #include "mygl.h"
 #include "shaders.h"
+#include "public/vecdefs.h"
 
 #include <vector>
 #include <memory>
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#pragma GCC diagnostic ignored "-Wunused-function"
-#include "public/vecdefs.h"
-#pragma GCC diagnostic pop
 
 using namespace mygl;
 

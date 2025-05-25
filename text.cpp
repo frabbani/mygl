@@ -1,13 +1,8 @@
+#include "public/vecdefs.h"
+#include "utils/log.h"
+
 #include <string>
 #include <map>
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#pragma GCC diagnostic ignored "-Wunused-function"
-#include "public/vecdefs.h"
-#pragma GCC diagnostic pop
-
-#include "utils/log.h"
 
 namespace mygl {
 struct CharSet {
@@ -125,3 +120,4 @@ uint32_t MyGL_streamAsciiCharSet(const char *name, const char *text, MyGL_Color 
 
   return numChars;
 }
+
